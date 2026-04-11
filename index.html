@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pines Wiffle Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="header">
+    <h1 class="app-title">Pines Wiffle</h1>
+    <div class="header-right">
+      <span id="live-indicator" class="live-indicator hidden">&#9679; LIVE</span>
+      <button id="share-btn" class="btn btn-primary btn-sm">Share</button>
+      <button id="settings-btn" class="btn btn-ghost btn-sm">&#9881;</button>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <button class="nav-tab active" data-tab="game">Game</button>
+    <button class="nav-tab" data-tab="lineup">Lineup</button>
+    <button class="nav-tab" data-tab="stats">Stats</button>
+    <button class="nav-tab" data-tab="history">History</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- GAME TAB -->
+    <div id="tab-game" class="tab-pane active">
+
+      <div class="scoreboard-card">
+        <div class="scoreboard-scroll">
+          <div class="scoreboard">
+            <div class="sb-row sb-header">
+              <div class="sb-team-col"></div>
+              <div id="sb-inning-headers" class="sb-innings"></div>
+              <div class="sb-totals-header"><span>R</span><span>H</span></div>
+            </div>
+            <div class="sb-row">
+              <div class="sb-team-col" id="sb-away-name">Away</div>
+              <div id="sb-away-scores" class="sb-innings"></div>
+              <div class="sb-totals">
+                <span id="sb-away-runs" class="sb-runs">0</span>
+                <span id="sb-away-hits">0</span>
+              </div>
+            </div>
+            <div class="sb-row">
+              <div class="sb-team-col" id="sb-home-name">Home</div>
+              <div id="sb-home-scores" class="sb-innings"></div>
+              <div class="sb-totals">
+                <span id="sb-home-runs" class="sb-runs">0</span>
+                <span id="sb-home-hits">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-bar">
+          <span id="inning-label" class="inning-label">1st &#9650;</span>
+          <div class="outs-group">
+            <span id="out1" class="out-dot"></span>
+            <span id="out2" class="out-dot"></span>
+            <span id="out3" class="out-dot"></span>
+            <button id="add-out-btn" class="btn btn-xs btn-ghost">+Out</button>
+            <button id="undo-out-btn" class="btn btn-xs btn-ghost">-Out</button>
+          </div>
+          <div class="half-btns">
+            <button id="prev-half" class="btn btn-sm btn-ghost">&larr;</button>
+            <button id="next-half" class="btn btn-sm btn-primary">Next &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Quick Score</div>
+        <div class="quick-score">
+          <div class="qs-team">
+            <div id="qs-away-name" class="qs-name">Away</div>
+            <div class="qs-controls">
+              <button class="btn btn-score" data-team="away" data-dir="-1">&#8722;</button>
+              <span id="qs-away-score" class="qs-score">0</span>
+              <button class="btn btn-score btn-score-add" data-team="away" data-dir="1">+</button>
+            </div>
+          </div>
+          <div class="qs-vs">VS</div>
+          <div class="qs-team">
+            <div id="qs-home-name" class="qs-name">Home</div>
+            <div class="qs-controls">
+              <button class="btn btn-score" data-team="home" data-dir="-1">&#8722;</button>
+              <span id="qs-home-score" class="qs-score">0</span>
+              <button class="btn btn-score btn-score-add" data-team="home" data-dir="1">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Log At-Bat</div>
+        <div class="batter-row">
+          <label class="field-label">Batter</label>
+          <select id="batter-select" class="select">
+            <option value="">Select batter&hellip;</option>
+          </select>
+        </div>
+        <div class="result-grid">
+          <button class="result-btn" data-result="1B">1B</button>
+          <button class="result-btn" data-result="2B">2B</button>
+          <button class="result-btn" data-result="3B">3B</button>
+          <button class="result-btn result-hr" data-result="HR">HR</button>
+          <button class="result-btn result-walk" data-result="BB">BB</button>
+          <button class="result-btn result-walk" data-result="HBP">HBP</button>
+          <button class="result-btn result-out" data-result="K">K</button>
+          <button class="result-btn result-out" data-result="Out">Out</button>
+          <button class="result-btn result-out" data-result="SF">SF</button>
+          <button class="result-btn result-out" data-result="E">E</button>
+        </div>
+        <div id="rbi-row" class="rbi-row hidden">
+          <label class="field-label">RBI</label>
+          <div class="rbi-controls">
+            <button id="rbi-minus" class="btn btn-xs btn-ghost">&#8722;</button>
+            <span id="rbi-count">0</span>
+            <button id="rbi-plus" class="btn btn-xs btn-ghost">+</button>
+          </div>
+          <button id="log-btn" class="btn btn-primary">Log</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Play Log</div>
+        <div id="play-log" class="play-log">
+          <p class="empty">No plays logged yet</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LINEUP TAB -->
+    <div id="tab-lineup" class="tab-pane">
+      <div class="team-toggle-row">
+        <button class="team-btn active" data-team="away">Away</button>
+        <button class="team-btn" data-team="home">Home</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span id="lineup-title" class="card-title">Away Team</span>
+          <button id="edit-team-btn" class="btn btn-xs btn-ghost">Rename</button>
+        </div>
+        <div id="lineup-list" class="lineup-list"></div>
+        <button id="add-player-btn" class="btn btn-primary btn-block">+ Add Player</button>
+      </div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div id="tab-stats" class="tab-pane">
+      <div class="team-toggle-row">
+        <button class="team-btn active" data-team="away">Away</button>
+        <button class="team-btn" data-team="home">Home</button>
+        <button class="team-btn" data-team="all">All</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Batting Stats</div>
+        <div class="table-wrap">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Player</th><th>AB</th><th>H</th><th>AVG</th>
+                <th>HR</th><th>RBI</th><th>BB</th><th>K</th>
+                <th>OBP</th><th>SLG</th>
+              </tr>
+            </thead>
+            <tbody id="batting-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Game History</span>
+          <button id="new-game-btn" class="btn btn-primary btn-sm">New Game</button>
+        </div>
+        <div id="history-list" class="history-list">
+          <p class="empty">No past games</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD/EDIT PLAYER MODAL -->
+<div id="player-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <h2 id="player-modal-title">Add Player</h2>
+    <div class="field"><label>Name</label><input id="pm-name" class="input" type="text" placeholder="Player name" autocomplete="off"></div>
+    <div class="field"><label>Number</label><input id="pm-number" class="input" type="text" placeholder="#" maxlength="3" autocomplete="off"></div>
+    <div class="field">
+      <label>Position</label>
+      <select id="pm-position" class="select">
+        <option value="">None</option>
+        <option value="P">P</option><option value="C">C</option>
+        <option value="1B">1B</option><option value="2B">2B</option>
+        <option value="SS">SS</option><option value="3B">3B</option>
+        <option value="OF">OF</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button id="pm-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="pm-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM RENAME MODAL -->
+<div id="team-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <h2>Rename Team</h2>
+    <div class="field"><label>Team Name</label><input id="tm-name" class="input" type="text" autocomplete="off"></div>
+    <div class="modal-actions">
+      <button id="tm-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="tm-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div id="share-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <h2>Share Stats</h2>
+    <p class="modal-desc">Snapshot link anyone can open (read-only view).</p>
+    <div class="share-row">
+      <input id="share-url" class="input" type="text" readonly>
+      <button id="copy-btn" class="btn btn-primary">Copy</button>
+    </div>
+    <div class="divider"></div>
+    <h3 class="sub-heading">Enable Live Sync</h3>
+    <p class="modal-desc">Connect Firebase for real-time updates. <a href="https://firebase.google.com/" target="_blank" rel="noopener" class="link">Get a free project &rarr;</a></p>
+    <div class="field"><label>Database URL</label><input id="fb-url" class="input" type="text" placeholder="https://your-app-default-rtdb.firebaseio.com" autocomplete="off"></div>
+    <div class="field"><label>API Key</label><input id="fb-key" class="input" type="text" placeholder="AIza..." autocomplete="off"></div>
+    <div class="field"><label>Project ID</label><input id="fb-project" class="input" type="text" placeholder="your-project-id" autocomplete="off"></div>
+    <button id="fb-connect" class="btn btn-primary btn-block">Connect Firebase</button>
+    <div class="modal-actions" style="margin-top:12px">
+      <button id="share-close" class="btn btn-ghost">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW GAME MODAL -->
+<div id="new-game-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <h2>New Game</h2>
+    <p class="modal-desc">What would you like to do with the current game?</p>
+    <div class="modal-actions col">
+      <button id="ng-save" class="btn btn-primary">Save to History &amp; Start New</button>
+      <button id="ng-discard" class="btn btn-danger">Discard &amp; Start New</button>
+      <button id="ng-cancel" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <h2>Settings</h2>
+    <div class="field">
+      <label>Total Innings</label>
+      <input id="set-innings" class="input" type="number" min="1" max="12" value="5">
+    </div>
+    <div class="modal-actions">
+      <button id="set-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="set-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
