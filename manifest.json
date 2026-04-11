@@ -1,0 +1,14 @@
+{
+  "name": "Pines Wiffle Tracker",
+  "short_name": "Pines Wiffle",
+  "description": "Live score and player stat tracker for wiffle ball",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
