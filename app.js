@@ -554,6 +554,106 @@
     ].join('');
   }
 
+  // ─── UMPIRE MODE ─────────────────────────────────────────────────────────────
+
+  let umpBalls   = 0;
+  let umpStrikes = 0;
+  let lastCallTimer = null;
+
+  function renderUmpire() {
+    // Score bar
+    document.getElementById('ump-away-name').textContent  = state.teams.away.name;
+    document.getElementById('ump-home-name').textContent  = state.teams.home.name;
+    document.getElementById('ump-away-score').textContent = teamRuns('away');
+    document.getElementById('ump-home-score').textContent = teamRuns('home');
+    document.getElementById('ump-inning').innerHTML =
+      ordinal(state.currentInning) + ' ' + (state.currentHalf === 'top' ? '&#9650;' : '&#9660;');
+
+    // Outs dots
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('ump-out' + i).classList.toggle('filled', i <= state.outs);
+    }
+
+    // Count dots
+    document.querySelectorAll('.ump-ball-dot').forEach((d, i) => {
+      d.classList.toggle('on', i < umpBalls);
+    });
+    document.querySelectorAll('.ump-strike-dot').forEach((d, i) => {
+      d.classList.toggle('on', i < umpStrikes);
+    });
+
+    document.getElementById('ump-balls').textContent   = umpBalls;
+    document.getElementById('ump-strikes').textContent = umpStrikes;
+
+    // Batter select
+    const sel = document.getElementById('ump-batter');
+    const team = battingTeam();
+    const current = sel.value;
+    const players = Object.values(state.players)
+      .filter(p => p.team === team)
+      .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    sel.innerHTML = '<option value="">Select batter\u2026</option>';
+    players.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = (p.number ? '#' + p.number + ' ' : '') + p.name;
+      if (p.id === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function umpShowCall(text, cls) {
+    const el = document.getElementById('ump-last-call');
+    el.textContent = text;
+    el.className = 'ump-last-call ' + cls;
+    if (lastCallTimer) clearTimeout(lastCallTimer);
+    lastCallTimer = setTimeout(() => el.classList.add('hidden'), 3000);
+  }
+
+  function umpLogAtBat(result, rbi) {
+    const pid = document.getElementById('ump-batter').value;
+    if (!pid) return;
+    state.atBats.push({
+      id: uid(), playerId: pid, result, rbi: rbi || 0,
+      inning: state.currentInning, half: state.currentHalf, ts: Date.now(),
+    });
+    saveState();
+    renderScoreboard();
+    renderQuickScore();
+    renderPlayLog();
+    renderUmpire();
+  }
+
+  function umpResetCount() {
+    umpBalls = 0;
+    umpStrikes = 0;
+    renderUmpire();
+  }
+
+  function umpAdvanceOuts() {
+    state.outs = Math.min(3, state.outs + 1);
+    if (state.outs >= 3) {
+      setTimeout(() => {
+        if (confirm('3 outs — advance to next half-inning?')) {
+          if (state.currentHalf === 'top') {
+            state.currentHalf = 'bottom';
+          } else {
+            state.currentInning = Math.min(state.currentInning + 1, state.totalInnings);
+            state.currentHalf = 'top';
+          }
+          state.outs = 0;
+          saveState();
+          renderScoreboard();
+          renderGameBar();
+          renderUmpire();
+        }
+      }, 300);
+    }
+    saveState();
+    renderGameBar();
+    renderUmpire();
+  }
+
   // ─── AT-BAT ENTRY STATE ──────────────────────────────────────────────────────
 
   let selectedResult = null;
@@ -583,6 +683,7 @@
       if (btn.dataset.tab === 'leaderboard') renderLeaderboard();
       if (btn.dataset.tab === 'schedule')    renderSchedule();
       if (btn.dataset.tab === 'gear')        renderGear();
+      if (btn.dataset.tab === 'umpire')      renderUmpire();
     });
   });
 
@@ -631,6 +732,75 @@
     state.outs = Math.max(0, state.outs - 1);
     saveState();
     renderGameBar();
+  });
+
+  // ─── UMPIRE EVENTS ───────────────────────────────────────────────────────────
+
+  document.getElementById('ump-ball').addEventListener('click', () => {
+    umpBalls++;
+    if (umpBalls >= 4) {
+      umpShowCall('BALL 4 — WALK', 'call-event');
+      umpLogAtBat('BB', 0);
+      umpResetCount();
+    } else {
+      umpShowCall('BALL ' + umpBalls, 'call-ball');
+      renderUmpire();
+    }
+  });
+
+  document.getElementById('ump-strike').addEventListener('click', () => {
+    umpStrikes++;
+    if (umpStrikes >= 3) {
+      umpShowCall('STRIKE 3 — OUT!', 'call-strike');
+      umpLogAtBat('K', 0);
+      umpAdvanceOuts();
+      umpResetCount();
+    } else {
+      umpShowCall('STRIKE ' + umpStrikes, 'call-strike');
+      renderUmpire();
+    }
+  });
+
+  document.getElementById('ump-foul').addEventListener('click', () => {
+    // Foul = strike unless already 2 strikes
+    if (umpStrikes < 2) {
+      umpStrikes++;
+      umpShowCall('FOUL — STRIKE ' + umpStrikes, 'call-foul');
+    } else {
+      umpShowCall('FOUL BALL', 'call-foul');
+    }
+    renderUmpire();
+  });
+
+  document.getElementById('ump-out').addEventListener('click', () => {
+    umpShowCall('OUT!', 'call-out');
+    umpLogAtBat('Out', 0);
+    umpAdvanceOuts();
+    umpResetCount();
+  });
+
+  document.getElementById('ump-reset').addEventListener('click', () => {
+    umpResetCount();
+    umpShowCall('Count Reset', 'call-event');
+  });
+
+  document.getElementById('ump-next-half').addEventListener('click', () => {
+    if (state.currentHalf === 'top') {
+      state.currentHalf = 'bottom';
+    } else {
+      if (state.currentInning < state.totalInnings) {
+        state.currentInning++;
+        state.currentHalf = 'top';
+      } else {
+        state.status = 'final';
+      }
+    }
+    state.outs = 0;
+    umpResetCount();
+    saveState();
+    renderScoreboard();
+    renderGameBar();
+    renderUmpire();
   });
 
   // Quick score

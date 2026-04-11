@@ -701,6 +701,161 @@ button { font-family: inherit; }
   flex-shrink: 0;
 }
 
+/* ===================== UMPIRE MODE ===================== */
+.ump-scorebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+
+.ump-team { text-align: center; }
+.ump-team-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ump-team-score {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ump-mid { text-align: center; }
+.ump-inning {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.ump-outs-row { display: flex; gap: 6px; justify-content: center; }
+.ump-out-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: inline-block;
+  transition: background var(--speed), border-color var(--speed);
+}
+.ump-out-dot.filled { background: var(--warning); border-color: var(--warning); }
+
+.ump-count-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 12px;
+}
+
+.ump-count-col { text-align: center; }
+.ump-count-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+.ump-count-num {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+  margin-top: 8px;
+}
+.ump-count-divider {
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--border);
+  margin-top: 16px;
+}
+
+.ump-count-dots { display: flex; gap: 6px; justify-content: center; }
+
+.ump-ball-dot, .ump-strike-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  transition: background var(--speed), border-color var(--speed);
+}
+.ump-ball-dot.on   { background: var(--success); border-color: var(--success); }
+.ump-strike-dot.on { background: var(--danger);  border-color: var(--danger); }
+
+.ump-batter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ump-batter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ump-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ump-btn {
+  padding: 28px 10px;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: opacity var(--speed), transform 0.08s;
+  font-family: inherit;
+}
+.ump-btn:active { transform: scale(0.96); opacity: 0.85; }
+
+.ump-ball-btn   { background: var(--success); color: #fff; }
+.ump-strike-btn { background: var(--danger);  color: #fff; }
+.ump-foul-btn   { background: var(--warning); color: #000; }
+.ump-out-btn    { background: #7c3aed;        color: #fff; }
+
+.ump-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ump-controls .btn { flex: 1; }
+
+.ump-last-call {
+  text-align: center;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  animation: fadeIn .3s ease;
+}
+.ump-last-call.hidden { display: none; }
+.ump-last-call.call-ball   { background: rgba(16,185,129,.15); color: var(--success); }
+.ump-last-call.call-strike { background: rgba(239,68,68,.15);  color: var(--danger); }
+.ump-last-call.call-foul   { background: rgba(245,158,11,.15); color: var(--warning); }
+.ump-last-call.call-out    { background: rgba(124,58,237,.15); color: #a78bfa; }
+.ump-last-call.call-event  { background: rgba(59,130,246,.15); color: var(--primary); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
 .schedule-actions {
   display: flex;
   gap: 6px;

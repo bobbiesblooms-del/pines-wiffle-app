@@ -26,6 +26,7 @@
 
   <nav class="nav">
     <button class="nav-tab active" data-tab="game">Game</button>
+    <button class="nav-tab" data-tab="umpire">&#9997; Ump</button>
     <button class="nav-tab" data-tab="schedule">Schedule</button>
     <button class="nav-tab" data-tab="lineup">Lineup</button>
     <button class="nav-tab" data-tab="stats">Stats</button>
@@ -223,6 +224,80 @@
           <ol id="lb-slg" class="lb-list"></ol>
         </div>
       </div>
+    </div>
+
+    <!-- UMPIRE TAB -->
+    <div id="tab-umpire" class="tab-pane">
+
+      <!-- Score bar -->
+      <div class="ump-scorebar">
+        <div class="ump-team">
+          <div id="ump-away-name" class="ump-team-name">Away</div>
+          <div id="ump-away-score" class="ump-team-score">0</div>
+        </div>
+        <div class="ump-mid">
+          <div id="ump-inning" class="ump-inning">1st &#9650;</div>
+          <div id="ump-outs-row" class="ump-outs-row">
+            <span id="ump-out1" class="ump-out-dot"></span>
+            <span id="ump-out2" class="ump-out-dot"></span>
+            <span id="ump-out3" class="ump-out-dot"></span>
+          </div>
+        </div>
+        <div class="ump-team">
+          <div id="ump-home-name" class="ump-team-name">Home</div>
+          <div id="ump-home-score" class="ump-team-score">0</div>
+        </div>
+      </div>
+
+      <!-- Count display -->
+      <div class="ump-count-display">
+        <div class="ump-count-col">
+          <div class="ump-count-label">Balls</div>
+          <div class="ump-count-dots" id="ump-ball-dots">
+            <span class="ump-ball-dot"></span>
+            <span class="ump-ball-dot"></span>
+            <span class="ump-ball-dot"></span>
+            <span class="ump-ball-dot"></span>
+          </div>
+          <div id="ump-balls" class="ump-count-num">0</div>
+        </div>
+        <div class="ump-count-divider">-</div>
+        <div class="ump-count-col">
+          <div class="ump-count-label">Strikes</div>
+          <div class="ump-count-dots" id="ump-strike-dots">
+            <span class="ump-strike-dot"></span>
+            <span class="ump-strike-dot"></span>
+            <span class="ump-strike-dot"></span>
+          </div>
+          <div id="ump-strikes" class="ump-count-num">0</div>
+        </div>
+      </div>
+
+      <!-- Batter selector -->
+      <div class="ump-batter-row">
+        <label class="ump-batter-label">Batter</label>
+        <select id="ump-batter" class="select">
+          <option value="">Select batter&hellip;</option>
+        </select>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="ump-buttons">
+        <button id="ump-ball"   class="ump-btn ump-ball-btn">BALL</button>
+        <button id="ump-strike" class="ump-btn ump-strike-btn">STRIKE</button>
+        <button id="ump-foul"   class="ump-btn ump-foul-btn">FOUL</button>
+        <button id="ump-out"    class="ump-btn ump-out-btn">OUT</button>
+      </div>
+
+      <!-- Secondary controls -->
+      <div class="ump-controls">
+        <button id="ump-reset"     class="btn btn-ghost">&#8635; Reset Count</button>
+        <button id="ump-next-half" class="btn btn-primary">Next Half &rarr;</button>
+      </div>
+
+      <!-- Last call display -->
+      <div id="ump-last-call" class="ump-last-call hidden"></div>
+
     </div>
 
     <!-- SCHEDULE TAB -->
