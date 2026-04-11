@@ -19,10 +19,15 @@
     <h1 class="app-title">Pines Wiffle</h1>
     <div class="header-right">
       <span id="live-indicator" class="live-indicator hidden">&#9679; LIVE</span>
-      <button id="share-btn" class="btn btn-primary btn-sm">Share</button>
+      <button id="golive-btn" class="btn btn-golive btn-sm">&#128247; Go Live</button>
       <button id="settings-btn" class="btn btn-ghost btn-sm">&#9881;</button>
     </div>
   </header>
+
+  <div id="viewer-banner" class="viewer-banner hidden">
+    <span class="live-badge">&#9679; LIVE</span>
+    <span>Watching live &mdash; updates automatically</span>
+  </div>
 
   <nav class="nav">
     <button class="nav-tab active" data-tab="game">Game</button>
@@ -381,26 +386,73 @@
   </div>
 </div>
 
-<!-- SHARE MODAL -->
+<!-- GO LIVE MODAL -->
 <div id="share-modal" class="modal hidden">
   <div class="modal-backdrop"></div>
   <div class="modal-sheet">
-    <h2>Share Stats</h2>
-    <p class="modal-desc">Snapshot link anyone can open (read-only view).</p>
-    <div class="share-row">
-      <input id="share-url" class="input" type="text" readonly>
-      <button id="copy-btn" class="btn btn-primary">Copy</button>
+
+    <!-- STATE: not connected -->
+    <div id="live-setup" class="">
+      <h2>&#128247; Go Live</h2>
+      <p class="modal-desc">Let anyone watch the game in real time on their phone — no account needed to view.</p>
+
+      <div class="setup-steps">
+        <div class="setup-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Create a free Firebase project</div>
+            <div class="step-desc">Takes about 2 minutes. No credit card required.</div>
+            <a href="https://console.firebase.google.com/" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-flex">Open Firebase Console &#8599;</a>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Add a Realtime Database</div>
+            <div class="step-desc">In your project: <strong>Build &rarr; Realtime Database &rarr; Create database</strong>. Choose any region, start in <strong>test mode</strong>.</div>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Paste your credentials below</div>
+            <div class="step-desc">Go to <strong>Project Settings &rarr; General</strong> and scroll to "Your apps".</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field"><label>Database URL</label><input id="fb-url" class="input" type="text" placeholder="https://your-app-default-rtdb.firebaseio.com" autocomplete="off"></div>
+      <div class="field"><label>API Key</label><input id="fb-key" class="input" type="text" placeholder="AIza..." autocomplete="off"></div>
+      <div class="field"><label>Project ID</label><input id="fb-project" class="input" type="text" placeholder="your-project-id" autocomplete="off"></div>
+      <button id="fb-connect" class="btn btn-primary btn-block">Connect &amp; Go Live</button>
+      <div class="modal-actions" style="margin-top:10px">
+        <button id="share-close" class="btn btn-ghost">Cancel</button>
+      </div>
     </div>
-    <div class="divider"></div>
-    <h3 class="sub-heading">Enable Live Sync</h3>
-    <p class="modal-desc">Connect Firebase for real-time updates. <a href="https://firebase.google.com/" target="_blank" rel="noopener" class="link">Get a free project &rarr;</a></p>
-    <div class="field"><label>Database URL</label><input id="fb-url" class="input" type="text" placeholder="https://your-app-default-rtdb.firebaseio.com" autocomplete="off"></div>
-    <div class="field"><label>API Key</label><input id="fb-key" class="input" type="text" placeholder="AIza..." autocomplete="off"></div>
-    <div class="field"><label>Project ID</label><input id="fb-project" class="input" type="text" placeholder="your-project-id" autocomplete="off"></div>
-    <button id="fb-connect" class="btn btn-primary btn-block">Connect Firebase</button>
-    <div class="modal-actions" style="margin-top:12px">
-      <button id="share-close" class="btn btn-ghost">Close</button>
+
+    <!-- STATE: connected — show QR + link -->
+    <div id="live-connected" class="hidden">
+      <div class="live-connected-header">
+        <span class="live-badge">&#9679; LIVE</span>
+        <h2>You&rsquo;re Live!</h2>
+        <p class="modal-desc">Anyone who scans this QR code or opens the link will watch the game in real time.</p>
+      </div>
+
+      <div class="qr-box">
+        <img id="qr-img" src="" alt="QR Code" class="qr-img">
+      </div>
+
+      <div class="share-row" style="margin-top:12px">
+        <input id="share-url" class="input" type="text" readonly>
+        <button id="copy-btn" class="btn btn-primary">Copy</button>
+      </div>
+
+      <div class="modal-actions" style="margin-top:12px">
+        <button id="share-close-2" class="btn btn-ghost">Close</button>
+        <button id="fb-disconnect" class="btn btn-danger">Disconnect</button>
+      </div>
     </div>
+
   </div>
 </div>
 

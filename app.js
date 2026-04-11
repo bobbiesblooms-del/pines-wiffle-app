@@ -188,17 +188,36 @@
       });
 
       if (isViewer) {
+        // Viewers subscribe to live game state
         fbRef.on('value', snap => {
           const data = snap.val();
-          if (data) { state = data; renderAll(); }
+          if (data) { state = data; renderAll(); renderUmpire(); }
         });
+      } else {
+        // Push current state immediately so viewers see it right away
+        fbSync();
       }
+
       document.getElementById('live-indicator').classList.remove('hidden');
+      document.getElementById('golive-btn').textContent = '🔴 Live';
+      document.getElementById('golive-btn').classList.add('btn-live-active');
       return true;
     } catch (e) {
       console.warn('Firebase init error:', e);
       return false;
     }
+  }
+
+  function fbDisconnect() {
+    if (fbRef)         { fbRef.off();         fbRef = null; }
+    if (fbScheduleRef) { fbScheduleRef.off(); fbScheduleRef = null; }
+    fbReady = false;
+    state.firebaseConfig = null;
+    saveState();
+    document.getElementById('live-indicator').classList.add('hidden');
+    document.getElementById('golive-btn').textContent = '📷 Go Live';
+    document.getElementById('golive-btn').classList.remove('btn-live-active');
+    if (firebase.apps.length) firebase.apps[0].delete().catch(() => {});
   }
 
   function fbSync() {
@@ -1088,28 +1107,35 @@
     }
   });
 
-  // ─── SHARE ───────────────────────────────────────────────────────────────────
+  // ─── GO LIVE ─────────────────────────────────────────────────────────────────
 
-  document.getElementById('share-btn').addEventListener('click', () => {
-    // Build snapshot share URL (base64 encoded state, no backend needed)
-    const snap = {
-      gameId: state.gameId, date: state.date, status: state.status,
-      teams: state.teams, inningScores: state.inningScores,
-      players: state.players, atBats: state.atBats,
-      totalInnings: state.totalInnings, currentInning: state.currentInning,
-      currentHalf: state.currentHalf, outs: state.outs,
-    };
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
-    const url = location.origin + location.pathname + '?share=' + encoded;
-    document.getElementById('share-url').value = url;
-
-    if (state.firebaseConfig) {
-      document.getElementById('fb-url').value     = state.firebaseConfig.databaseURL || '';
-      document.getElementById('fb-key').value     = state.firebaseConfig.apiKey      || '';
-      document.getElementById('fb-project').value = state.firebaseConfig.projectId   || '';
+  function showLiveModal() {
+    if (fbReady) {
+      showConnectedView();
+    } else {
+      document.getElementById('live-setup').classList.remove('hidden');
+      document.getElementById('live-connected').classList.add('hidden');
+      if (state.firebaseConfig) {
+        document.getElementById('fb-url').value     = state.firebaseConfig.databaseURL || '';
+        document.getElementById('fb-key').value     = state.firebaseConfig.apiKey      || '';
+        document.getElementById('fb-project').value = state.firebaseConfig.projectId   || '';
+      }
     }
     openModal('share-modal');
-  });
+  }
+
+  function showConnectedView() {
+    document.getElementById('live-setup').classList.add('hidden');
+    document.getElementById('live-connected').classList.remove('hidden');
+    const liveUrl = location.origin + location.pathname + '?game=' + state.gameId;
+    document.getElementById('share-url').value = liveUrl;
+    // Generate QR code via free public API
+    document.getElementById('qr-img').src =
+      'https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=e8eaf0&bgcolor=1a1d27&data=' +
+      encodeURIComponent(liveUrl);
+  }
+
+  document.getElementById('golive-btn').addEventListener('click', showLiveModal);
 
   document.getElementById('copy-btn').addEventListener('click', () => {
     const url = document.getElementById('share-url').value;
@@ -1137,21 +1163,24 @@
     state.firebaseConfig = cfg;
     saveState();
 
-    const ok = fbInit(cfg);
     const btn = document.getElementById('fb-connect');
+    const ok = fbInit(cfg);
     if (ok) {
-      btn.textContent = 'Connected!';
-      btn.style.background = 'var(--success)';
-      // Switch share URL to live game link
-      const liveUrl = location.origin + location.pathname + '?game=' + state.gameId;
-      document.getElementById('share-url').value = liveUrl;
+      showConnectedView();
     } else {
       btn.textContent = 'Connection failed — check credentials';
       btn.style.background = 'var(--danger)';
     }
   });
 
-  document.getElementById('share-close').addEventListener('click', () => closeModal('share-modal'));
+  document.getElementById('share-close').addEventListener('click',   () => closeModal('share-modal'));
+  document.getElementById('share-close-2').addEventListener('click', () => closeModal('share-modal'));
+
+  document.getElementById('fb-disconnect').addEventListener('click', () => {
+    if (!confirm('Disconnect Firebase? Viewers will stop receiving live updates.')) return;
+    fbDisconnect();
+    closeModal('share-modal');
+  });
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
@@ -1196,17 +1225,38 @@
         state = Object.assign(defaultState(decoded.totalInnings), decoded);
         isViewer = true;
         document.body.classList.add('viewer-mode');
-        document.getElementById('share-btn').textContent = 'View Mode';
+        document.getElementById('viewer-banner').classList.remove('hidden');
+        document.getElementById('golive-btn').textContent = '👁 Watching';
+        document.getElementById('golive-btn').disabled = true;
       } catch (e) {
         console.warn('Bad share data');
       }
     }
 
-    if (params.has('game') && state.firebaseConfig) {
-      state.gameId = params.get('game');
+    if (params.has('game')) {
       isViewer = true;
       document.body.classList.add('viewer-mode');
-      fbInit(state.firebaseConfig);
+      document.getElementById('viewer-banner').classList.remove('hidden');
+      document.getElementById('golive-btn').textContent = '👁 Watching';
+      document.getElementById('golive-btn').disabled = true;
+
+      // Try stored config first, then prompt
+      const gameId = params.get('game');
+      state.gameId = gameId;
+      if (state.firebaseConfig) {
+        fbInit(state.firebaseConfig);
+      } else {
+        // Ask viewer to paste Firebase config so they can connect
+        document.getElementById('viewer-banner').innerHTML =
+          '<span class="live-badge">&#9679; LIVE</span>' +
+          '<span>To watch live, tap <strong>👁 Watching</strong> and connect Firebase.</span>';
+        document.getElementById('golive-btn').disabled = false;
+        document.getElementById('golive-btn').addEventListener('click', () => {
+          document.getElementById('live-setup').classList.remove('hidden');
+          document.getElementById('live-connected').classList.add('hidden');
+          openModal('share-modal');
+        }, { once: true });
+      }
     }
   }
 
