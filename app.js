@@ -114,8 +114,22 @@
   // ─── FIREBASE ────────────────────────────────────────────────────────────────
 
   let fbRef = null;
+  let fbScheduleRef = null;
   let isViewer = false;
   let fbReady = false;
+
+  // Local schedule storage (fallback when no Firebase)
+  let schedule = loadSchedule();
+
+  function loadSchedule() {
+    try {
+      return JSON.parse(localStorage.getItem('pines-wiffle-schedule') || '[]');
+    } catch (_) { return []; }
+  }
+
+  function saveScheduleLocal() {
+    try { localStorage.setItem('pines-wiffle-schedule', JSON.stringify(schedule)); } catch (_) {}
+  }
 
   function fbInit(cfg) {
     if (typeof firebase === 'undefined') return false;
@@ -124,6 +138,17 @@
       const db = firebase.database();
       fbRef = db.ref('games/' + state.gameId);
       fbReady = true;
+
+      // Shared schedule ref — same for all users
+      fbScheduleRef = db.ref('schedule');
+      fbScheduleRef.on('value', snap => {
+        const data = snap.val();
+        schedule = data ? Object.values(data) : [];
+        saveScheduleLocal();
+        renderSchedule();
+        renderUpcomingBanner();
+      });
+
       if (isViewer) {
         fbRef.on('value', snap => {
           const data = snap.val();
@@ -143,6 +168,14 @@
     fbRef.set(state).catch(() => {});
   }
 
+  function fbSyncSchedule() {
+    if (!fbScheduleRef) return;
+    // Write each game by its id so merges work cleanly
+    const obj = {};
+    schedule.forEach(g => { obj[g.id] = g; });
+    fbScheduleRef.set(obj).catch(() => {});
+  }
+
   // ─── RENDER ──────────────────────────────────────────────────────────────────
 
   function renderAll() {
@@ -154,6 +187,75 @@
     renderLineup();
     renderStats();
     renderHistory();
+    renderUpcomingBanner();
+  }
+
+  function nextUpcomingGame() {
+    const now = Date.now();
+    return schedule
+      .filter(g => new Date(g.date + 'T' + (g.time || '23:59')).getTime() >= now)
+      .sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')))[0] || null;
+  }
+
+  function renderUpcomingBanner() {
+    const banner = document.getElementById('upcoming-banner');
+    const next = nextUpcomingGame();
+    if (!next) { banner.classList.add('hidden'); return; }
+
+    const d = new Date(next.date + 'T' + (next.time || '12:00'));
+    const dateStr = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    const timeStr = next.time ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
+
+    document.getElementById('upcoming-title').textContent = `${next.away} vs ${next.home}`;
+    document.getElementById('upcoming-meta').textContent =
+      [dateStr, timeStr, next.location].filter(Boolean).join(' · ');
+    banner.classList.remove('hidden');
+  }
+
+  function renderSchedule() {
+    const list = document.getElementById('schedule-list');
+    const notice = document.getElementById('firebase-notice');
+
+    // Show Firebase notice if not connected
+    if (!fbReady) {
+      notice.classList.remove('hidden');
+    } else {
+      notice.classList.add('hidden');
+    }
+
+    const sorted = [...schedule].sort((a, b) =>
+      new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00'))
+    );
+
+    if (sorted.length === 0) {
+      list.innerHTML = '<p class="empty">No games scheduled</p>';
+      return;
+    }
+
+    const now = Date.now();
+    list.innerHTML = '';
+    sorted.forEach(g => {
+      const dt = new Date(g.date + 'T' + (g.time || '12:00'));
+      const isPast = dt.getTime() < now;
+      const dateStr = dt.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+      const timeStr = g.time ? dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
+
+      const div = document.createElement('div');
+      div.className = 'schedule-item' + (isPast ? ' past' : '');
+      div.innerHTML =
+        `<div class="schedule-date-badge">${dateStr}</div>` +
+        `<div class="schedule-matchup">${esc(g.away)} <span style="color:var(--text-muted)">vs</span> ${esc(g.home)}</div>` +
+        `<div class="schedule-details">` +
+          (timeStr   ? `<span class="schedule-detail">&#128336; ${timeStr}</span>` : '') +
+          (g.location ? `<span class="schedule-detail">&#128205; ${esc(g.location)}</span>` : '') +
+          (g.notes    ? `<span class="schedule-detail">&#128221; ${esc(g.notes)}</span>` : '') +
+        `</div>` +
+        `<div class="schedule-actions">` +
+          `<button class="btn btn-xs btn-ghost" data-action="edit-game" data-id="${g.id}">Edit</button>` +
+          `<button class="btn btn-xs btn-danger" data-action="del-game" data-id="${g.id}">Delete</button>` +
+        `</div>`;
+      list.appendChild(div);
+    });
   }
 
   function renderScoreboard() {
@@ -417,6 +519,7 @@
       if (btn.dataset.tab === 'lineup')      renderLineup();
       if (btn.dataset.tab === 'history')     renderHistory();
       if (btn.dataset.tab === 'leaderboard') renderLeaderboard();
+      if (btn.dataset.tab === 'schedule')    renderSchedule();
     });
   });
 
@@ -671,6 +774,85 @@
     saveState();
     renderAll();
     closeModal('new-game-modal');
+  });
+
+  // ─── SCHEDULE EVENTS ─────────────────────────────────────────────────────────
+
+  let editingGameId = null;
+
+  document.getElementById('add-game-btn').addEventListener('click', () => {
+    editingGameId = null;
+    document.getElementById('schedule-modal-title').textContent = 'Schedule Game';
+    document.getElementById('sc-date').value     = '';
+    document.getElementById('sc-time').value     = '';
+    document.getElementById('sc-home').value     = state.teams.home.name !== 'Home Team' ? state.teams.home.name : '';
+    document.getElementById('sc-away').value     = state.teams.away.name !== 'Away Team' ? state.teams.away.name : '';
+    document.getElementById('sc-location').value = '';
+    document.getElementById('sc-notes').value    = '';
+    openModal('schedule-modal');
+    setTimeout(() => document.getElementById('sc-date').focus(), 80);
+  });
+
+  document.getElementById('sc-cancel').addEventListener('click', () => closeModal('schedule-modal'));
+
+  document.getElementById('sc-save').addEventListener('click', () => {
+    const date = document.getElementById('sc-date').value;
+    const home = document.getElementById('sc-home').value.trim();
+    const away = document.getElementById('sc-away').value.trim();
+    if (!date || !home || !away) {
+      alert('Please fill in date, home team, and away team.');
+      return;
+    }
+
+    const game = {
+      id:       editingGameId || uid(),
+      date,
+      time:     document.getElementById('sc-time').value,
+      home,
+      away,
+      location: document.getElementById('sc-location').value.trim(),
+      notes:    document.getElementById('sc-notes').value.trim(),
+      ts:       Date.now(),
+    };
+
+    const idx = schedule.findIndex(g => g.id === game.id);
+    if (idx >= 0) schedule[idx] = game;
+    else schedule.push(game);
+
+    saveScheduleLocal();
+    fbSyncSchedule();
+    renderSchedule();
+    renderUpcomingBanner();
+    closeModal('schedule-modal');
+  });
+
+  document.getElementById('schedule-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+
+    if (btn.dataset.action === 'del-game') {
+      if (!confirm('Delete this scheduled game?')) return;
+      schedule = schedule.filter(g => g.id !== id);
+      saveScheduleLocal();
+      fbSyncSchedule();
+      renderSchedule();
+      renderUpcomingBanner();
+    }
+
+    if (btn.dataset.action === 'edit-game') {
+      const g = schedule.find(x => x.id === id);
+      if (!g) return;
+      editingGameId = id;
+      document.getElementById('schedule-modal-title').textContent = 'Edit Game';
+      document.getElementById('sc-date').value     = g.date;
+      document.getElementById('sc-time').value     = g.time || '';
+      document.getElementById('sc-home').value     = g.home;
+      document.getElementById('sc-away').value     = g.away;
+      document.getElementById('sc-location').value = g.location || '';
+      document.getElementById('sc-notes').value    = g.notes    || '';
+      openModal('schedule-modal');
+    }
   });
 
   // ─── SHARE ───────────────────────────────────────────────────────────────────

@@ -599,6 +599,78 @@ button { font-family: inherit; }
   padding: 10px 0;
 }
 
+/* ===================== SCHEDULE ===================== */
+.upcoming-banner {
+  background: linear-gradient(135deg, #1e3a5f, #1a2f4e);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.upcoming-banner.hidden { display: none; }
+.upcoming-inner { display: flex; align-items: center; gap: 12px; }
+.upcoming-icon { font-size: 24px; }
+.upcoming-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+.upcoming-meta  { font-size: 12px; color: #93c5fd; }
+
+.firebase-notice {
+  background: rgba(245,158,11,.1);
+  border: 1px solid rgba(245,158,11,.3);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--warning);
+}
+.firebase-notice.hidden { display: none; }
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.schedule-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.schedule-item.past { opacity: 0.5; }
+
+.schedule-date-badge {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.schedule-matchup {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.schedule-details {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-detail { display: flex; align-items: center; gap: 4px; }
+
+.schedule-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
 /* ===================== BUTTONS ===================== */
 .btn {
   display: inline-flex;

@@ -26,6 +26,7 @@
 
   <nav class="nav">
     <button class="nav-tab active" data-tab="game">Game</button>
+    <button class="nav-tab" data-tab="schedule">Schedule</button>
     <button class="nav-tab" data-tab="lineup">Lineup</button>
     <button class="nav-tab" data-tab="stats">Stats</button>
     <button class="nav-tab" data-tab="leaderboard">Leaders</button>
@@ -36,6 +37,16 @@
 
     <!-- GAME TAB -->
     <div id="tab-game" class="tab-pane active">
+      <!-- Upcoming game banner (shown when a game is scheduled) -->
+      <div id="upcoming-banner" class="upcoming-banner hidden">
+        <div class="upcoming-inner">
+          <span class="upcoming-icon">&#128197;</span>
+          <div class="upcoming-info">
+            <div id="upcoming-title" class="upcoming-title">Next Game</div>
+            <div id="upcoming-meta" class="upcoming-meta"></div>
+          </div>
+        </div>
+      </div>
 
       <div class="scoreboard-card">
         <div class="scoreboard-scroll">
@@ -213,6 +224,22 @@
       </div>
     </div>
 
+    <!-- SCHEDULE TAB -->
+    <div id="tab-schedule" class="tab-pane">
+      <div id="firebase-notice" class="firebase-notice hidden">
+        <p>&#9888; Connect Firebase in the <strong>Share</strong> menu to sync schedules with everyone.</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Upcoming Games</span>
+          <button id="add-game-btn" class="btn btn-primary btn-sm">+ Schedule</button>
+        </div>
+        <div id="schedule-list" class="schedule-list">
+          <p class="empty">No games scheduled</p>
+        </div>
+      </div>
+    </div>
+
     <!-- HISTORY TAB -->
     <div id="tab-history" class="tab-pane">
       <div class="card">
@@ -315,6 +342,24 @@
     <div class="modal-actions">
       <button id="set-cancel" class="btn btn-ghost">Cancel</button>
       <button id="set-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULE GAME MODAL -->
+<div id="schedule-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <h2 id="schedule-modal-title">Schedule Game</h2>
+    <div class="field"><label>Date</label><input id="sc-date" class="input" type="date"></div>
+    <div class="field"><label>Time</label><input id="sc-time" class="input" type="time"></div>
+    <div class="field"><label>Home Team</label><input id="sc-home" class="input" type="text" placeholder="Home team name" autocomplete="off"></div>
+    <div class="field"><label>Away Team</label><input id="sc-away" class="input" type="text" placeholder="Away team name" autocomplete="off"></div>
+    <div class="field"><label>Location</label><input id="sc-location" class="input" type="text" placeholder="Field / address" autocomplete="off"></div>
+    <div class="field"><label>Notes</label><input id="sc-notes" class="input" type="text" placeholder="Optional notes" autocomplete="off"></div>
+    <div class="modal-actions">
+      <button id="sc-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="sc-save" class="btn btn-primary">Save</button>
     </div>
   </div>
 </div>
