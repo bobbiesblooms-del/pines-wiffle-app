@@ -713,6 +713,44 @@ button { font-family: inherit; }
   animation: blink 2s infinite;
 }
 
+.method-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.method-tab {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--speed);
+  position: relative;
+}
+.method-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.method-badge {
+  position: absolute;
+  top: -8px;
+  right: 6px;
+  background: var(--success);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+.method-panel { }
+.method-panel.hidden { display: none; }
+
 .setup-steps {
   display: flex;
   flex-direction: column;

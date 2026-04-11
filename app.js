@@ -88,6 +88,7 @@
   function saveState() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
     fbSync();
+    if (isGistLive()) gistPush();
   }
 
   function loadState() {
@@ -155,6 +156,117 @@
   let fbScheduleRef = null;
   let isViewer = false;
   let fbReady = false;
+
+  // ─── GITHUB GIST BACKEND ─────────────────────────────────────────────────────
+
+  let gistId    = null;
+  let gistToken = null;
+  let gistPollTimer = null;
+
+  function gistSaveConfig() {
+    try {
+      localStorage.setItem('pines-wiffle-gist', JSON.stringify({ gistId, gistToken }));
+    } catch (_) {}
+  }
+
+  function gistLoadConfig() {
+    try {
+      const d = JSON.parse(localStorage.getItem('pines-wiffle-gist') || '{}');
+      gistId    = d.gistId    || null;
+      gistToken = d.gistToken || null;
+    } catch (_) {}
+  }
+
+  async function gistCreate(token) {
+    const res = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: { Authorization: 'token ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: 'Pines Wiffle live game state',
+        public: false,
+        files: { 'game.json': { content: JSON.stringify(state) } },
+      }),
+    });
+    if (!res.ok) throw new Error('GitHub API error ' + res.status);
+    const data = await res.json();
+    return data.id;
+  }
+
+  async function gistPush() {
+    if (!gistId || !gistToken || isViewer) return;
+    try {
+      await fetch('https://api.github.com/gists/' + gistId, {
+        method: 'PATCH',
+        headers: { Authorization: 'token ' + gistToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: { 'game.json': { content: JSON.stringify(state) } } }),
+      });
+    } catch (_) {}
+  }
+
+  async function gistPoll() {
+    if (!gistId) return;
+    try {
+      const res = await fetch('https://api.github.com/gists/' + gistId, {
+        headers: gistToken ? { Authorization: 'token ' + gistToken } : {},
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const content = data.files?.['game.json']?.content;
+      if (content) {
+        const parsed = JSON.parse(content);
+        state = Object.assign(defaultState(parsed.totalInnings), parsed);
+        renderAll();
+        renderUmpire();
+        const banner = document.getElementById('viewer-banner');
+        if (banner) {
+          const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          banner.innerHTML = '<span class="live-badge">&#9679; LIVE</span><span>Watching live &mdash; last updated ' + t + '</span>';
+        }
+      }
+    } catch (_) {}
+  }
+
+  async function gistConnect(token) {
+    gistToken = token;
+    // Reuse existing gist if we have one, otherwise create
+    if (!gistId) {
+      gistId = await gistCreate(token);
+    }
+    gistSaveConfig();
+    // Push current state immediately
+    await gistPush();
+    startGistPushInterval();
+    document.getElementById('live-indicator').classList.remove('hidden');
+    document.getElementById('golive-btn').textContent = '🔴 Live';
+    document.getElementById('golive-btn').classList.add('btn-live-active');
+  }
+
+  function startGistPushInterval() {
+    // Host pushes state every 5 seconds automatically
+    if (gistPollTimer) clearInterval(gistPollTimer);
+    gistPollTimer = setInterval(() => { if (!isViewer) gistPush(); }, 5000);
+  }
+
+  function startGistPollInterval() {
+    // Viewer polls every 5 seconds
+    if (gistPollTimer) clearInterval(gistPollTimer);
+    gistPoll(); // immediate first fetch
+    gistPollTimer = setInterval(gistPoll, 5000);
+  }
+
+  function gistDisconnect() {
+    if (gistPollTimer) clearInterval(gistPollTimer);
+    gistPollTimer = null;
+    gistId    = null;
+    gistToken = null;
+    localStorage.removeItem('pines-wiffle-gist');
+    document.getElementById('live-indicator').classList.add('hidden');
+    document.getElementById('golive-btn').textContent = '📷 Go Live';
+    document.getElementById('golive-btn').classList.remove('btn-live-active');
+  }
+
+  function isGistLive() { return !!(gistId && gistToken && !isViewer); }
 
   // Local schedule storage (fallback when no Firebase)
   let schedule = loadSchedule();
@@ -1109,8 +1221,35 @@
 
   // ─── GO LIVE ─────────────────────────────────────────────────────────────────
 
+  // Method tab switching
+  document.querySelectorAll('.method-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.method-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.method-panel').forEach(p => p.classList.add('hidden'));
+      btn.classList.add('active');
+      document.getElementById('method-' + btn.dataset.method).classList.remove('hidden');
+    });
+  });
+
+  // Gist connect
+  document.getElementById('gist-connect').addEventListener('click', async () => {
+    const token = document.getElementById('gist-token').value.trim();
+    if (!token) { alert('Please paste your GitHub token.'); return; }
+    const btn = document.getElementById('gist-connect');
+    btn.textContent = 'Connecting…';
+    btn.disabled = true;
+    try {
+      await gistConnect(token);
+      showConnectedView();
+    } catch (e) {
+      btn.textContent = 'Failed — check your token';
+      btn.style.background = 'var(--danger)';
+      btn.disabled = false;
+    }
+  });
+
   function showLiveModal() {
-    if (fbReady) {
+    if (fbReady || isGistLive()) {
       showConnectedView();
     } else {
       document.getElementById('live-setup').classList.remove('hidden');
@@ -1120,6 +1259,9 @@
         document.getElementById('fb-key').value     = state.firebaseConfig.apiKey      || '';
         document.getElementById('fb-project').value = state.firebaseConfig.projectId   || '';
       }
+      if (gistToken) {
+        document.getElementById('gist-token').value = gistToken;
+      }
     }
     openModal('share-modal');
   }
@@ -1127,9 +1269,11 @@
   function showConnectedView() {
     document.getElementById('live-setup').classList.add('hidden');
     document.getElementById('live-connected').classList.remove('hidden');
-    const liveUrl = location.origin + location.pathname + '?game=' + state.gameId;
+    // Gist link takes priority over Firebase link
+    const liveUrl = gistId
+      ? location.origin + location.pathname + '?gist=' + gistId
+      : location.origin + location.pathname + '?game=' + state.gameId;
     document.getElementById('share-url').value = liveUrl;
-    // Generate QR code via free public API
     document.getElementById('qr-img').src =
       'https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=e8eaf0&bgcolor=1a1d27&data=' +
       encodeURIComponent(liveUrl);
@@ -1177,8 +1321,9 @@
   document.getElementById('share-close-2').addEventListener('click', () => closeModal('share-modal'));
 
   document.getElementById('fb-disconnect').addEventListener('click', () => {
-    if (!confirm('Disconnect Firebase? Viewers will stop receiving live updates.')) return;
+    if (!confirm('Disconnect? Viewers will stop receiving live updates.')) return;
     fbDisconnect();
+    gistDisconnect();
     closeModal('share-modal');
   });
 
@@ -1233,6 +1378,19 @@
       }
     }
 
+    // Gist-based live view — no login needed to watch
+    if (params.has('gist')) {
+      gistId    = params.get('gist');
+      gistToken = null; // viewers don't need a token for public gist reads
+      isViewer  = true;
+      document.body.classList.add('viewer-mode');
+      document.getElementById('viewer-banner').classList.remove('hidden');
+      document.getElementById('golive-btn').textContent = '👁 Watching';
+      document.getElementById('golive-btn').disabled = true;
+      startGistPollInterval();
+    }
+
+    // Firebase-based live view
     if (params.has('game')) {
       isViewer = true;
       document.body.classList.add('viewer-mode');
@@ -1240,13 +1398,11 @@
       document.getElementById('golive-btn').textContent = '👁 Watching';
       document.getElementById('golive-btn').disabled = true;
 
-      // Try stored config first, then prompt
       const gameId = params.get('game');
       state.gameId = gameId;
       if (state.firebaseConfig) {
         fbInit(state.firebaseConfig);
       } else {
-        // Ask viewer to paste Firebase config so they can connect
         document.getElementById('viewer-banner').innerHTML =
           '<span class="live-badge">&#9679; LIVE</span>' +
           '<span>To watch live, tap <strong>👁 Watching</strong> and connect Firebase.</span>';
@@ -1262,9 +1418,11 @@
 
   // ─── INIT ────────────────────────────────────────────────────────────────────
 
+  gistLoadConfig();
   checkViewerMode();
-  if (!isViewer && state.firebaseConfig) {
-    fbInit(state.firebaseConfig);
+  if (!isViewer) {
+    if (state.firebaseConfig) fbInit(state.firebaseConfig);
+    if (isGistLive()) startGistPushInterval();
   }
   renderAll();
   renderGear();

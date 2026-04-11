@@ -394,37 +394,68 @@
     <!-- STATE: not connected -->
     <div id="live-setup" class="">
       <h2>&#128247; Go Live</h2>
-      <p class="modal-desc">Let anyone watch the game in real time on their phone — no account needed to view.</p>
+      <p class="modal-desc">Choose how to share live stats with everyone.</p>
 
-      <div class="setup-steps">
-        <div class="setup-step">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <div class="step-title">Create a free Firebase project</div>
-            <div class="step-desc">Takes about 2 minutes. No credit card required.</div>
-            <a href="https://console.firebase.google.com/" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-flex">Open Firebase Console &#8599;</a>
-          </div>
-        </div>
-        <div class="setup-step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <div class="step-title">Add a Realtime Database</div>
-            <div class="step-desc">In your project: <strong>Build &rarr; Realtime Database &rarr; Create database</strong>. Choose any region, start in <strong>test mode</strong>.</div>
-          </div>
-        </div>
-        <div class="setup-step">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <div class="step-title">Paste your credentials below</div>
-            <div class="step-desc">Go to <strong>Project Settings &rarr; General</strong> and scroll to "Your apps".</div>
-          </div>
-        </div>
+      <!-- Method picker -->
+      <div class="method-tabs">
+        <button class="method-tab active" data-method="gist">&#128049; GitHub <span class="method-badge">Easiest</span></button>
+        <button class="method-tab" data-method="firebase">&#128293; Firebase</button>
       </div>
 
-      <div class="field"><label>Database URL</label><input id="fb-url" class="input" type="text" placeholder="https://your-app-default-rtdb.firebaseio.com" autocomplete="off"></div>
-      <div class="field"><label>API Key</label><input id="fb-key" class="input" type="text" placeholder="AIza..." autocomplete="off"></div>
-      <div class="field"><label>Project ID</label><input id="fb-project" class="input" type="text" placeholder="your-project-id" autocomplete="off"></div>
-      <button id="fb-connect" class="btn btn-primary btn-block">Connect &amp; Go Live</button>
+      <!-- GIST METHOD -->
+      <div id="method-gist" class="method-panel">
+        <div class="setup-steps">
+          <div class="setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Create a GitHub token</div>
+              <div class="step-desc">Go to GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens &rarr; Tokens (classic) &rarr; Generate new token. Check the <strong>gist</strong> scope only.</div>
+              <a href="https://github.com/settings/tokens/new?scopes=gist&description=Pines+Wiffle" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-flex">Create token &#8599;</a>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Paste it below &mdash; that&rsquo;s it</div>
+              <div class="step-desc">No other accounts or setup needed.</div>
+            </div>
+          </div>
+        </div>
+        <div class="field"><label>GitHub Token</label><input id="gist-token" class="input" type="password" placeholder="ghp_..." autocomplete="off"></div>
+        <button id="gist-connect" class="btn btn-primary btn-block">Connect &amp; Go Live</button>
+      </div>
+
+      <!-- FIREBASE METHOD -->
+      <div id="method-firebase" class="method-panel hidden">
+        <div class="setup-steps">
+          <div class="setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Create a free Firebase project</div>
+              <a href="https://console.firebase.google.com/" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-flex">Open Firebase Console &#8599;</a>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Add a Realtime Database</div>
+              <div class="step-desc"><strong>Build &rarr; Realtime Database &rarr; Create database</strong>, start in test mode.</div>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Paste credentials below</div>
+              <div class="step-desc"><strong>Project Settings &rarr; General &rarr; Your apps</strong></div>
+            </div>
+          </div>
+        </div>
+        <div class="field"><label>Database URL</label><input id="fb-url" class="input" type="text" placeholder="https://your-app-default-rtdb.firebaseio.com" autocomplete="off"></div>
+        <div class="field"><label>API Key</label><input id="fb-key" class="input" type="text" placeholder="AIza..." autocomplete="off"></div>
+        <div class="field"><label>Project ID</label><input id="fb-project" class="input" type="text" placeholder="your-project-id" autocomplete="off"></div>
+        <button id="fb-connect" class="btn btn-primary btn-block">Connect &amp; Go Live</button>
+      </div>
+
       <div class="modal-actions" style="margin-top:10px">
         <button id="share-close" class="btn btn-ghost">Cancel</button>
       </div>
