@@ -1,6 +1,44 @@
 (function () {
   'use strict';
 
+  // ─── AFFILIATE CONFIG ─────────────────────────────────────────────────────────
+  // Paste your affiliate IDs here once approved. Leave blank to use plain links.
+  //
+  // Amazon Associates:  affiliate-program.amazon.com  → your tag looks like "pineswiffle-20"
+  // Target (Impact):    impact.com  → search "Target Affiliates" → your ID is a number
+  // Walmart (Impact):   impact.com  → search "Walmart" → your ID is a number
+  // Dick's (CJ):        cj.com      → search "Dick's Sporting Goods" → grab your PID
+
+  const AFFILIATES = {
+    amazon:  '',   // e.g. 'pineswiffle-20'
+    target:  '',   // e.g. '1234567'  (Impact publisher ID)
+    walmart: '',   // e.g. '1234567'  (Impact publisher ID)
+    dicks:   '',   // e.g. '1234567'  (CJ PID)
+  };
+
+  function amazonUrl(query) {
+    const base = 'https://www.amazon.com/s?k=' + encodeURIComponent(query);
+    return AFFILIATES.amazon ? base + '&tag=' + AFFILIATES.amazon : base;
+  }
+  function targetUrl(query) {
+    const base = 'https://www.target.com/s?searchTerm=' + encodeURIComponent(query);
+    return AFFILIATES.target
+      ? 'https://goto.target.com/c/' + AFFILIATES.target + '/wiffle?' + encodeURIComponent(base)
+      : base;
+  }
+  function walmartUrl(query) {
+    const base = 'https://www.walmart.com/search?q=' + encodeURIComponent(query);
+    return AFFILIATES.walmart
+      ? 'https://goto.walmart.com/c/' + AFFILIATES.walmart + '/wiffle?' + encodeURIComponent(base)
+      : base;
+  }
+  function dicksUrl(query) {
+    const base = 'https://www.dickssportinggoods.com/search?searchTerm=' + encodeURIComponent(query);
+    return AFFILIATES.dicks
+      ? base + '&PID=' + AFFILIATES.dicks
+      : base;
+  }
+
   // ─── UTILITIES ───────────────────────────────────────────────────────────────
 
   function uid() {
@@ -492,6 +530,30 @@
     });
   }
 
+  function renderGear() {
+    function gearLink(icon, name, desc, url) {
+      return `<a class="gear-item" href="${url}" target="_blank" rel="noopener noreferrer">` +
+        `<div class="gear-icon">${icon}</div>` +
+        `<div class="gear-info"><div class="gear-name">${name}</div><div class="gear-desc">${desc}</div></div>` +
+        `<div class="gear-arrow">&#8250;</div>` +
+        `</a>`;
+    }
+
+    document.getElementById('gear-bats').innerHTML = [
+      gearLink('&#9733;', 'Official Wiffle Ball Site', 'Bats, balls, and sets direct from the source', 'https://www.wiffle.com'),
+      gearLink('&#128230;', 'Amazon — Wiffle Ball Bats', 'Wide selection, fast shipping, Prime eligible', amazonUrl('wiffle ball bat')),
+      gearLink('&#127919;', 'Target — Wiffle Ball Bats', 'In-store pickup or delivery available', targetUrl('wiffle ball bat')),
+      gearLink('&#128717;', 'Walmart — Wiffle Ball Bats', 'Budget-friendly options, store pickup available', walmartUrl('wiffle ball bat')),
+      gearLink('&#127944;', "Dick's Sporting Goods", 'Sports-focused selection, in-store and online', dicksUrl('wiffle ball')),
+    ].join('');
+
+    document.getElementById('gear-sets').innerHTML = [
+      gearLink('&#128230;', 'Amazon — Wiffle Ball Sets', 'Complete bat and ball combo sets', amazonUrl('wiffle ball set')),
+      gearLink('&#128230;', 'Amazon — Bulk Wiffle Balls', 'Stock up — bulk packs for leagues', amazonUrl('wiffle balls bulk')),
+      gearLink('&#127919;', 'Target — Wiffle Ball Sets', 'Sets with bases and everything you need', targetUrl('wiffle ball set')),
+    ].join('');
+  }
+
   // ─── AT-BAT ENTRY STATE ──────────────────────────────────────────────────────
 
   let selectedResult = null;
@@ -520,6 +582,7 @@
       if (btn.dataset.tab === 'history')     renderHistory();
       if (btn.dataset.tab === 'leaderboard') renderLeaderboard();
       if (btn.dataset.tab === 'schedule')    renderSchedule();
+      if (btn.dataset.tab === 'gear')        renderGear();
     });
   });
 
@@ -984,6 +1047,7 @@
     fbInit(state.firebaseConfig);
   }
   renderAll();
+  renderGear();
 
   // Register service worker for PWA / offline support
   if ('serviceWorker' in navigator) {
