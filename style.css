@@ -665,6 +665,42 @@ button { font-family: inherit; }
 
 .schedule-detail { display: flex; align-items: center; gap: 4px; }
 
+/* ===================== GEAR ===================== */
+.gear-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gear-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+  transition: background var(--speed), border-color var(--speed);
+  border: 1px solid transparent;
+}
+.gear-item:hover {
+  background: var(--border);
+  border-color: var(--primary);
+}
+
+.gear-icon { font-size: 22px; flex-shrink: 0; }
+
+.gear-info { flex: 1; min-width: 0; }
+.gear-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.gear-desc { font-size: 12px; color: var(--text-muted); }
+
+.gear-arrow {
+  font-size: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
 .schedule-actions {
   display: flex;
   gap: 6px;
