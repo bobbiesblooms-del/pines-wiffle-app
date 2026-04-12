@@ -507,6 +507,7 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 (function () {
   'use strict';
@@ -692,58 +693,53 @@
     });
   }
 
-  // ── Firebase cross-device live sync ──────────────────────────────────────────
-  function startFirebase(dbUrl, gameId) {
-    const endpoint = dbUrl.replace(/\/$/, '') + '/games/' + gameId + '.json';
-    let src;
+  // ── PeerJS cross-device live sync ────────────────────────────────────────────
+  function startPeer(roomCode) {
+    if (typeof Peer === 'undefined') return;
 
-    function connect() {
-      src = new EventSource(endpoint);
-      src.addEventListener('put', e => {
-        try {
-          const payload = JSON.parse(e.data);
-          if (payload && payload.data) {
-            state      = payload.data.state;
-            umpBalls   = payload.data.umpBalls   || 0;
-            umpStrikes = payload.data.umpStrikes || 0;
-            render();
-          }
-        } catch (_) {}
+    document.getElementById('sp-no-game-title').textContent = 'Connecting…';
+    document.getElementById('sp-no-game-msg').textContent   = 'Reaching the scorer's device. This takes a few seconds.';
+
+    const guest = new Peer();
+
+    function connectToHost() {
+      const conn = guest.connect('pw-' + roomCode.toLowerCase(), { reliable: true });
+
+      const timeout = setTimeout(() => {
+        conn.close();
+        connectToHost(); // retry if handshake stalls
+      }, 12000);
+
+      conn.on('open', () => {
+        clearTimeout(timeout);
+        document.getElementById('sp-no-game-title').textContent = 'Waiting for game…';
+        document.getElementById('sp-no-game-msg').textContent   = 'Connected! Scoreboard will appear as soon as the scorer logs a play.';
       });
-      src.addEventListener('patch', e => {
-        try {
-          const payload = JSON.parse(e.data);
-          if (payload && payload.data && payload.data.state) {
-            state      = payload.data.state;
-            umpBalls   = payload.data.umpBalls   || umpBalls;
-            umpStrikes = payload.data.umpStrikes || umpStrikes;
-            render();
-          }
-        } catch (_) {}
+
+      conn.on('data', data => {
+        clearTimeout(timeout);
+        if (data && data.state) {
+          state      = data.state;
+          umpBalls   = data.umpBalls   || 0;
+          umpStrikes = data.umpStrikes || 0;
+          render();
+        }
       });
-      src.onerror = () => {
-        src.close();
-        setTimeout(connect, 5000); // reconnect after 5s on error
-      };
+
+      conn.on('close',   () => { clearTimeout(timeout); setTimeout(connectToHost, 4000); });
+      conn.on('error',   () => { clearTimeout(timeout); setTimeout(connectToHost, 4000); });
     }
 
-    connect();
+    guest.on('open',  () => connectToHost());
+    guest.on('error', ()  => setTimeout(() => guest.reconnect && guest.reconnect(), 5000));
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────────
-  const params = new URLSearchParams(location.search);
-  const gameId = params.get('game');
-  const dbEncoded = params.get('db');
+  const params   = new URLSearchParams(location.search);
+  const roomCode = params.get('room');
 
-  if (gameId && dbEncoded) {
-    // Cross-device: use Firebase EventSource
-    try {
-      const dbUrl = decodeURIComponent(escape(atob(dbEncoded)));
-      // Update waiting message to show we're connected
-      document.getElementById('sp-no-game-title').textContent = 'Waiting for game…';
-      document.getElementById('sp-no-game-msg').textContent = 'Connected to live feed. The scoreboard will appear as soon as the scorer logs a play.';
-      startFirebase(dbUrl, gameId);
-    } catch (_) {}
+  if (roomCode) {
+    startPeer(roomCode);
   }
 
   // Always also load from localStorage + BroadcastChannel (same-device fallback)

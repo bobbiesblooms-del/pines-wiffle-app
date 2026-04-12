@@ -95,7 +95,7 @@
     if (liveChannel) {
       try { liveChannel.postMessage({ type: 'update', state, umpBalls, umpStrikes }); } catch (_) {}
     }
-    pushToFirebase();
+    broadcastToPeers();
   }
 
   function loadState() {
@@ -235,22 +235,69 @@
 
   let isViewer = false;
 
-  // ─── FIREBASE RELAY ───────────────────────────────────────────────────────────
+  // ─── PEER-TO-PEER LIVE (PeerJS) ───────────────────────────────────────────────
 
-  let firebaseDbUrl = (localStorage.getItem('pines-firebase-url') || '').replace(/\/$/, '');
+  function genRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
 
-  let fbPushTimer = null;
-  function pushToFirebase() {
-    if (!firebaseDbUrl) return;
-    clearTimeout(fbPushTimer);
-    fbPushTimer = setTimeout(() => {
-      const url = firebaseDbUrl + '/games/' + state.gameId + '.json';
-      fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state, umpBalls, umpStrikes, ts: Date.now() }),
-      }).catch(() => {});
-    }, 400); // debounce rapid updates
+  let roomCode = localStorage.getItem('pines-room-code') || genRoomCode();
+  localStorage.setItem('pines-room-code', roomCode);
+
+  let hostPeer   = null;
+  let guestConns = [];
+
+  function initHostPeer() {
+    if (typeof Peer === 'undefined') return;
+    if (hostPeer && !hostPeer.destroyed) return;
+
+    hostPeer = new Peer('pw-' + roomCode.toLowerCase());
+
+    hostPeer.on('open', () => {
+      document.getElementById('live-indicator').classList.remove('hidden');
+    });
+
+    hostPeer.on('connection', conn => {
+      guestConns.push(conn);
+      conn.on('open', () => {
+        try { conn.send({ state, umpBalls, umpStrikes }); } catch (_) {}
+      });
+      conn.on('close', () => { guestConns = guestConns.filter(c => c !== conn); });
+      conn.on('error', () => { guestConns = guestConns.filter(c => c !== conn); });
+    });
+
+    hostPeer.on('error', err => {
+      document.getElementById('live-indicator').classList.add('hidden');
+      if (err.type === 'unavailable-id') {
+        // Room code collision — generate a new one and retry
+        roomCode = genRoomCode();
+        localStorage.setItem('pines-room-code', roomCode);
+        hostPeer = null;
+        setTimeout(initHostPeer, 1000);
+      }
+    });
+
+    hostPeer.on('disconnected', () => {
+      try { hostPeer.reconnect(); } catch (_) {}
+    });
+  }
+
+  function broadcastToPeers() {
+    guestConns = guestConns.filter(c => c.open);
+    guestConns.forEach(conn => {
+      try { conn.send({ state, umpBalls, umpStrikes }); } catch (_) {}
+    });
+  }
+
+  function resetRoomCode() {
+    roomCode = genRoomCode();
+    localStorage.setItem('pines-room-code', roomCode);
+    if (hostPeer) { try { hostPeer.destroy(); } catch (_) {} }
+    hostPeer = null;
+    guestConns = [];
+    document.getElementById('live-indicator').classList.add('hidden');
+    setTimeout(initHostPeer, 600);
   }
 
   // ─── LIVE BROADCAST ──────────────────────────────────────────────────────────
@@ -1278,6 +1325,7 @@
     saveState();
     renderAll();
     closeModal('new-game-modal');
+    resetRoomCode();
   });
 
   document.getElementById('ng-discard').addEventListener('click', () => {
@@ -1288,6 +1336,7 @@
     saveState();
     renderAll();
     closeModal('new-game-modal');
+    resetRoomCode();
   });
 
   // ─── SCHEDULE EVENTS ─────────────────────────────────────────────────────────
@@ -1371,13 +1420,9 @@
 
   document.getElementById('golive-btn').addEventListener('click', () => {
     const base = location.href.replace(/\/[^/]*$/, '/');
-    let url = base + 'spectator.html?game=' + state.gameId;
-    if (firebaseDbUrl) url += '&db=' + btoa(unescape(encodeURIComponent(firebaseDbUrl)));
+    const url  = base + 'spectator.html?room=' + roomCode;
     window.open(url, '_blank');
-    // Copy to clipboard so scorer can text it to fans
-    if (firebaseDbUrl) {
-      navigator.clipboard.writeText(url).then(() => showToast()).catch(() => showToast());
-    }
+    navigator.clipboard.writeText(url).then(() => showToast()).catch(() => showToast());
   });
 
   function showToast() {
@@ -1403,8 +1448,7 @@
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
   document.getElementById('settings-btn').addEventListener('click', () => {
-    document.getElementById('set-innings').value  = state.totalInnings;
-    document.getElementById('set-firebase').value = firebaseDbUrl;
+    document.getElementById('set-innings').value = state.totalInnings;
     openModal('settings-modal');
   });
   document.getElementById('set-cancel').addEventListener('click', () => closeModal('settings-modal'));
@@ -1414,12 +1458,6 @@
     state.totalInnings = n;
     state.inningScores = Array.from({ length: n }, (_, i) => old[i] || { away: 0, home: 0 });
     if (state.currentInning > n) state.currentInning = n;
-
-    const fbVal = document.getElementById('set-firebase').value.trim().replace(/\/$/, '');
-    firebaseDbUrl = fbVal;
-    if (fbVal) localStorage.setItem('pines-firebase-url', fbVal);
-    else localStorage.removeItem('pines-firebase-url');
-
     saveState();
     renderAll();
     closeModal('settings-modal');
@@ -1461,6 +1499,7 @@
   checkViewerMode();
   renderAll();
   renderGear();
+  initHostPeer();
 
   // If opened via Watch button, jump straight to the Live tab
   if (new URLSearchParams(location.search).has('watch')) {
