@@ -1869,4 +1869,10 @@ body.viewer-mode #undo-out-btn { display: none !important; }
 /* Hide share/scorer controls in viewer-mode for live tab */
 body.viewer-mode .bases-bar { display: none !important; }
 
+/* Career stats G column */
+.career-g {
+  color: var(--blue-lt);
+  font-weight: 700;
+}
+
 body.viewer-mode .qs-controls { pointer-events: none; }

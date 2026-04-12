@@ -123,11 +123,9 @@
       .reduce((s, p) => s + playerStats(p.id).H, 0);
   }
 
-  function playerStats(id) {
-    const abs = state.atBats.filter(ab => ab.playerId === id);
+  function computeStatsFromAbs(abs) {
     let AB = 0, H = 0, s1 = 0, s2 = 0, s3 = 0, HR = 0,
         RBI = 0, BB = 0, HBP = 0, K = 0, SF = 0;
-
     for (const ab of abs) {
       const r = ab.result;
       if (r !== 'BB' && r !== 'HBP') AB++;
@@ -141,7 +139,6 @@
       else if (r === 'SF')  SF++;
       RBI += (ab.rbi || 0);
     }
-
     const PA = AB + BB + HBP + SF;
     const TB = s1 + s2 * 2 + s3 * 3 + HR * 4;
     return {
@@ -150,6 +147,83 @@
       OBP: fmt(H + BB + HBP, PA),
       SLG: fmt(TB, AB),
     };
+  }
+
+  function playerStats(id) {
+    return computeStatsFromAbs(state.atBats.filter(ab => ab.playerId === id));
+  }
+
+  // ─── CAREER STATS ─────────────────────────────────────────────────────────────
+
+  function careerStatsForPlayer(name) {
+    const key = name.toLowerCase();
+    const allAbs = [];
+    const gamesSeen = new Set();
+
+    // Current game
+    Object.values(state.players)
+      .filter(p => p.name.toLowerCase() === key)
+      .forEach(p => {
+        const abs = state.atBats.filter(ab => ab.playerId === p.id);
+        if (abs.length) gamesSeen.add(state.gameId);
+        allAbs.push(...abs);
+      });
+
+    // History games
+    (state.gameHistory || []).forEach(g => {
+      Object.values(g.players || {})
+        .filter(p => p.name.toLowerCase() === key)
+        .forEach(p => {
+          const abs = (g.atBats || []).filter(ab => ab.playerId === p.id);
+          if (abs.length) gamesSeen.add(g.gameId);
+          allAbs.push(...abs);
+        });
+    });
+
+    return { G: gamesSeen.size, ...computeStatsFromAbs(allAbs) };
+  }
+
+  function getAllCareerPlayerNames() {
+    const seen = new Map(); // lowercase → display name
+    Object.values(state.players).forEach(p => seen.set(p.name.toLowerCase(), p.name));
+    (state.gameHistory || []).forEach(g => {
+      Object.values(g.players || {}).forEach(p => {
+        if (!seen.has(p.name.toLowerCase())) seen.set(p.name.toLowerCase(), p.name);
+      });
+    });
+    return Array.from(seen.values());
+  }
+
+  function renderCareerStats() {
+    const tbody = document.getElementById('career-body');
+    const names = getAllCareerPlayerNames();
+
+    if (names.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="11" class="empty">No history yet — finish a game and save it</td></tr>';
+      return;
+    }
+
+    const rows = names
+      .map(name => ({ name, s: careerStatsForPlayer(name) }))
+      .filter(r => r.s.AB > 0)
+      .sort((a, b) => parseFloat('0' + b.s.AVG.replace(/^\./, '0.')) - parseFloat('0' + a.s.AVG.replace(/^\./, '0.')));
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="11" class="empty">No at-bats recorded yet</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    rows.forEach(({ name, s }) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        `<td class="name-col">${esc(name)}</td>` +
+        `<td class="career-g">${s.G}</td>` +
+        `<td>${s.AB}</td><td>${s.H}</td><td>${s.AVG}</td>` +
+        `<td>${s.HR}</td><td>${s.RBI}</td><td>${s.BB}</td><td>${s.K}</td>` +
+        `<td>${s.OBP}</td><td>${s.SLG}</td>`;
+      tbody.appendChild(tr);
+    });
   }
 
   function battingTeam() {
@@ -829,7 +903,7 @@
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-      if (btn.dataset.tab === 'stats')       renderStats();
+      if (btn.dataset.tab === 'stats')       { statsTeam === 'career' ? renderCareerStats() : renderStats(); }
       if (btn.dataset.tab === 'lineup')      renderLineup();
       if (btn.dataset.tab === 'history')     renderHistory();
       if (btn.dataset.tab === 'leaderboard') renderLeaderboard();
@@ -1151,7 +1225,15 @@
       document.querySelectorAll('#tab-stats .team-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       statsTeam = btn.dataset.team;
-      renderStats();
+      if (statsTeam === 'career') {
+        document.getElementById('batting-card').classList.add('hidden');
+        document.getElementById('career-card').classList.remove('hidden');
+        renderCareerStats();
+      } else {
+        document.getElementById('batting-card').classList.remove('hidden');
+        document.getElementById('career-card').classList.add('hidden');
+        renderStats();
+      }
     });
   });
 

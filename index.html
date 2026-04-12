@@ -196,8 +196,10 @@
         <button class="team-btn active" data-team="away">Away</button>
         <button class="team-btn" data-team="home">Home</button>
         <button class="team-btn" data-team="all">All</button>
+        <button class="team-btn" data-team="career">Career</button>
       </div>
-      <div class="card">
+
+      <div id="batting-card" class="card">
         <div class="card-title">Batting Stats</div>
         <div class="table-wrap">
           <table class="stats-table">
@@ -209,6 +211,21 @@
               </tr>
             </thead>
             <tbody id="batting-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="career-card" class="card hidden">
+        <div class="card-title">Career Stats — All Games</div>
+        <div class="table-wrap">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Player</th><th>G</th><th>AB</th><th>H</th><th>AVG</th>
+                <th>HR</th><th>RBI</th><th>BB</th><th>K</th><th>OBP</th><th>SLG</th>
+              </tr>
+            </thead>
+            <tbody id="career-body"></tbody>
           </table>
         </div>
       </div>
