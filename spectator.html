@@ -430,8 +430,8 @@
   <!-- No game state -->
   <div id="sp-no-game" class="sp-no-game">
     <div class="sp-no-game-icon">⚾</div>
-    <h2>No active game</h2>
-    <p>Open the Pines Wiffle scorer app and start a game. This page will update automatically.</p>
+    <h2 id="sp-no-game-title">No active game</h2>
+    <p id="sp-no-game-msg">Open the Pines Wiffle scorer app and start a game. This page will update automatically.</p>
   </div>
 
   <!-- Game content -->
@@ -692,7 +692,61 @@
     });
   }
 
+  // ── Firebase cross-device live sync ──────────────────────────────────────────
+  function startFirebase(dbUrl, gameId) {
+    const endpoint = dbUrl.replace(/\/$/, '') + '/games/' + gameId + '.json';
+    let src;
+
+    function connect() {
+      src = new EventSource(endpoint);
+      src.addEventListener('put', e => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload && payload.data) {
+            state      = payload.data.state;
+            umpBalls   = payload.data.umpBalls   || 0;
+            umpStrikes = payload.data.umpStrikes || 0;
+            render();
+          }
+        } catch (_) {}
+      });
+      src.addEventListener('patch', e => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload && payload.data && payload.data.state) {
+            state      = payload.data.state;
+            umpBalls   = payload.data.umpBalls   || umpBalls;
+            umpStrikes = payload.data.umpStrikes || umpStrikes;
+            render();
+          }
+        } catch (_) {}
+      });
+      src.onerror = () => {
+        src.close();
+        setTimeout(connect, 5000); // reconnect after 5s on error
+      };
+    }
+
+    connect();
+  }
+
   // ── Init ─────────────────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  const gameId = params.get('game');
+  const dbEncoded = params.get('db');
+
+  if (gameId && dbEncoded) {
+    // Cross-device: use Firebase EventSource
+    try {
+      const dbUrl = decodeURIComponent(escape(atob(dbEncoded)));
+      // Update waiting message to show we're connected
+      document.getElementById('sp-no-game-title').textContent = 'Waiting for game…';
+      document.getElementById('sp-no-game-msg').textContent = 'Connected to live feed. The scoreboard will appear as soon as the scorer logs a play.';
+      startFirebase(dbUrl, gameId);
+    } catch (_) {}
+  }
+
+  // Always also load from localStorage + BroadcastChannel (same-device fallback)
   state = readStorage();
   render();
 })();

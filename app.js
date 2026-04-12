@@ -95,6 +95,7 @@
     if (liveChannel) {
       try { liveChannel.postMessage({ type: 'update', state, umpBalls, umpStrikes }); } catch (_) {}
     }
+    pushToFirebase();
   }
 
   function loadState() {
@@ -233,6 +234,24 @@
   // ─── VIEWER FLAG ─────────────────────────────────────────────────────────────
 
   let isViewer = false;
+
+  // ─── FIREBASE RELAY ───────────────────────────────────────────────────────────
+
+  let firebaseDbUrl = (localStorage.getItem('pines-firebase-url') || '').replace(/\/$/, '');
+
+  let fbPushTimer = null;
+  function pushToFirebase() {
+    if (!firebaseDbUrl) return;
+    clearTimeout(fbPushTimer);
+    fbPushTimer = setTimeout(() => {
+      const url = firebaseDbUrl + '/games/' + state.gameId + '.json';
+      fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state, umpBalls, umpStrikes, ts: Date.now() }),
+      }).catch(() => {});
+    }, 400); // debounce rapid updates
+  }
 
   // ─── LIVE BROADCAST ──────────────────────────────────────────────────────────
 
@@ -1352,8 +1371,20 @@
 
   document.getElementById('golive-btn').addEventListener('click', () => {
     const base = location.href.replace(/\/[^/]*$/, '/');
-    window.open(base + 'spectator.html', '_blank');
+    let url = base + 'spectator.html?game=' + state.gameId;
+    if (firebaseDbUrl) url += '&db=' + btoa(unescape(encodeURIComponent(firebaseDbUrl)));
+    window.open(url, '_blank');
+    // Copy to clipboard so scorer can text it to fans
+    if (firebaseDbUrl) {
+      navigator.clipboard.writeText(url).then(() => showToast()).catch(() => showToast());
+    }
   });
+
+  function showToast() {
+    const t = document.getElementById('share-toast');
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), 3500);
+  }
 
   document.getElementById('copy-btn').addEventListener('click', () => {
     const url = document.getElementById('share-url').value;
@@ -1372,7 +1403,8 @@
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
   document.getElementById('settings-btn').addEventListener('click', () => {
-    document.getElementById('set-innings').value = state.totalInnings;
+    document.getElementById('set-innings').value  = state.totalInnings;
+    document.getElementById('set-firebase').value = firebaseDbUrl;
     openModal('settings-modal');
   });
   document.getElementById('set-cancel').addEventListener('click', () => closeModal('settings-modal'));
@@ -1382,6 +1414,12 @@
     state.totalInnings = n;
     state.inningScores = Array.from({ length: n }, (_, i) => old[i] || { away: 0, home: 0 });
     if (state.currentInning > n) state.currentInning = n;
+
+    const fbVal = document.getElementById('set-firebase').value.trim().replace(/\/$/, '');
+    firebaseDbUrl = fbVal;
+    if (fbVal) localStorage.setItem('pines-firebase-url', fbVal);
+    else localStorage.removeItem('pines-firebase-url');
+
     saveState();
     renderAll();
     closeModal('settings-modal');

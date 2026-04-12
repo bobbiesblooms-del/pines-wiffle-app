@@ -1875,4 +1875,32 @@ body.viewer-mode .bases-bar { display: none !important; }
   font-weight: 700;
 }
 
+/* Field hint text (settings) */
+.field-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.field-hint a { color: var(--blue-lt); }
+
+/* Share toast */
+.share-toast {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--blue);
+  color: #fff;
+  padding: 11px 22px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(59,130,246,.45);
+  pointer-events: none;
+}
+.share-toast.hidden { display: none; }
+
 body.viewer-mode .qs-controls { pointer-events: none; }

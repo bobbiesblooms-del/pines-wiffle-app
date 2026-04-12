@@ -564,12 +564,22 @@
       <label>Total Innings</label>
       <input id="set-innings" class="input" type="number" min="1" max="12" value="5">
     </div>
+    <div class="field">
+      <label>&#128279; Firebase Database URL</label>
+      <input id="set-firebase" class="input" type="url" placeholder="https://your-app-default-rtdb.firebaseio.com" autocomplete="off" spellcheck="false">
+      <div class="field-hint">Enables live sharing with fans on <strong>other devices</strong>. Free &mdash; takes ~5 min to set up.<br>
+        <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer">Get a free Firebase database &rarr;</a>
+      </div>
+    </div>
     <div class="modal-actions">
       <button id="set-cancel" class="btn btn-ghost">Cancel</button>
       <button id="set-save" class="btn btn-primary">Save</button>
     </div>
   </div>
 </div>
+
+<!-- SHARE TOAST -->
+<div id="share-toast" class="share-toast hidden">&#128279; Spectator link copied &mdash; send it to fans!</div>
 
 <!-- SCHEDULE GAME MODAL -->
 <div id="schedule-modal" class="modal hidden">
