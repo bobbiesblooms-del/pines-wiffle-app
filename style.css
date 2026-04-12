@@ -1089,16 +1089,37 @@ button { font-family: inherit; cursor: pointer; }
 }
 .gc-nav-row .btn { font-size: 11px; padding: 5px 9px; }
 
-/* Situation row: diamond + BSO */
+/* Situation block: diamond + BSO + pitch buttons */
 .gc-situation {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #080f1e 0%, #0a1225 100%);
+  border-bottom: 1px solid var(--border);
+}
+.gc-situation-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(180deg, #080f1e 0%, #0a1225 100%);
-  padding: 18px 20px 14px;
+  padding: 18px 20px 10px;
   gap: 12px;
-  border-bottom: 1px solid var(--border);
 }
+.gc-pitch-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 12px 10px;
+}
+.gc-pitch-btns .ump-btn {
+  height: 54px;
+  font-size: 15px;
+  border-radius: 10px;
+}
+.gc-pitch-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 12px 12px;
+}
+.gc-pitch-footer .btn { font-size: 12px; }
 
 /* Diamond */
 .gc-diamond-panel {

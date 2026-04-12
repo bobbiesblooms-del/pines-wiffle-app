@@ -97,37 +97,54 @@
         </div>
       </div>
 
-      <!-- ── GC SITUATION: Diamond + BSO ── -->
+      <!-- ── GC SITUATION: Diamond + BSO + Pitch Buttons ── -->
       <div class="gc-situation">
 
-        <div class="gc-diamond-panel">
-          <div class="gc-diamond-field">
-            <div id="gc-base-2" class="gc-base gc-2b"></div>
-            <div id="gc-base-3" class="gc-base gc-3b"></div>
-            <div id="gc-base-1" class="gc-base gc-1b"></div>
-            <div class="gc-hp"></div>
+        <!-- Top row: diamond + BSO -->
+        <div class="gc-situation-top">
+          <div class="gc-diamond-panel">
+            <div class="gc-diamond-field">
+              <div id="gc-base-2" class="gc-base gc-2b"></div>
+              <div id="gc-base-3" class="gc-base gc-3b"></div>
+              <div id="gc-base-1" class="gc-base gc-1b"></div>
+              <div class="gc-hp"></div>
+            </div>
+            <div class="gc-base-btns">
+              <button class="base-toggle-btn" data-base="2">3B</button>
+              <button class="base-toggle-btn" data-base="1">2B</button>
+              <button class="base-toggle-btn" data-base="0">1B</button>
+              <button id="bases-clear" class="btn btn-xs btn-ghost">Clr</button>
+            </div>
           </div>
-          <div class="gc-base-btns">
-            <button class="base-toggle-btn" data-base="2">3B</button>
-            <button class="base-toggle-btn" data-base="1">2B</button>
-            <button class="base-toggle-btn" data-base="0">1B</button>
-            <button id="bases-clear" class="btn btn-xs btn-ghost">Clr</button>
+
+          <div class="gc-bso-panel">
+            <div class="gc-bso-item">
+              <div id="gc-balls" class="gc-bso-num gc-b-num">0</div>
+              <div class="gc-bso-key">B</div>
+            </div>
+            <div class="gc-bso-item">
+              <div id="gc-strikes" class="gc-bso-num gc-s-num">0</div>
+              <div class="gc-bso-key">S</div>
+            </div>
+            <div class="gc-bso-item">
+              <div id="gc-outs-count" class="gc-bso-num gc-o-num">0</div>
+              <div class="gc-bso-key">O</div>
+            </div>
           </div>
         </div>
 
-        <div class="gc-bso-panel">
-          <div class="gc-bso-item">
-            <div id="gc-balls" class="gc-bso-num gc-b-num">0</div>
-            <div class="gc-bso-key">B</div>
-          </div>
-          <div class="gc-bso-item">
-            <div id="gc-strikes" class="gc-bso-num gc-s-num">0</div>
-            <div class="gc-bso-key">S</div>
-          </div>
-          <div class="gc-bso-item">
-            <div id="gc-outs-count" class="gc-bso-num gc-o-num">0</div>
-            <div class="gc-bso-key">O</div>
-          </div>
+        <!-- Pitch buttons row -->
+        <div class="gc-pitch-btns">
+          <button id="ump-ball"   class="ump-btn ump-ball-btn">BALL</button>
+          <button id="ump-strike" class="ump-btn ump-strike-btn">STRIKE</button>
+          <button id="ump-foul"   class="ump-btn ump-foul-btn">FOUL</button>
+          <button id="ump-out"    class="ump-btn ump-out-btn">OUT</button>
+        </div>
+
+        <!-- Last call + reset -->
+        <div id="ump-last-call" class="ump-last-call hidden"></div>
+        <div class="gc-pitch-footer">
+          <button id="ump-reset" class="btn btn-ghost btn-sm">&#8635; Reset Count</button>
         </div>
 
       </div>
@@ -138,18 +155,6 @@
         <select id="batter-select" class="select">
           <option value="">Select batter&hellip;</option>
         </select>
-      </div>
-
-      <!-- ── PITCH BUTTONS ── -->
-      <div class="ump-buttons">
-        <button id="ump-ball"   class="ump-btn ump-ball-btn">BALL</button>
-        <button id="ump-strike" class="ump-btn ump-strike-btn">STRIKE</button>
-        <button id="ump-foul"   class="ump-btn ump-foul-btn">FOUL</button>
-        <button id="ump-out"    class="ump-btn ump-out-btn">OUT</button>
-      </div>
-      <div id="ump-last-call" class="ump-last-call hidden"></div>
-      <div class="ump-controls">
-        <button id="ump-reset" class="btn btn-ghost">&#8635; Reset Count</button>
       </div>
 
       <!-- ── LOG RESULT ── -->
