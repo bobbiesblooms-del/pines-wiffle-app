@@ -1728,7 +1728,7 @@ body.viewer-mode #undo-out-btn { display: none !important; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 .lv-diamond-label {
   font-size: 9px;
@@ -1737,38 +1737,60 @@ body.viewer-mode #undo-out-btn { display: none !important; }
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
-.lv-diamond-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 36px);
-  grid-template-rows: repeat(3, 36px);
+
+/* Diamond field — absolute-positioned bases with connecting outline */
+.lv-diamond-field {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
 }
-.lv-base {
-  width: 24px;
-  height: 24px;
-  margin: auto;
-  border: 2px solid var(--border-lt);
-  background: var(--surface3);
+/* Connecting diamond outline */
+.lv-diamond-field::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 72px; height: 72px;
+  margin: -36px 0 0 -36px;
+  border: 1.5px solid var(--border-lt);
   transform: rotate(45deg);
-  border-radius: 3px;
-  transition: background var(--t), border-color var(--t), box-shadow var(--t);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0;
+  border-radius: 2px;
+  pointer-events: none;
 }
-.lv-base.occupied {
+/* Base squares */
+.lv-base-sq {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: var(--surface3);
+  border: 2px solid var(--border-lt);
+  border-radius: 3px;
+  transform: rotate(45deg);
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
+}
+.lv-base-sq.occupied {
   background: var(--amber);
   border-color: var(--amber);
-  box-shadow: 0 0 10px var(--amber-glow);
+  box-shadow: 0 0 14px var(--amber-glow);
 }
-.lv-home-plate {
-  width: 20px;
-  height: 20px;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  border: 2px solid var(--border-lt);
+/* Positions: base center sits at each diamond corner */
+.lv-2b { top:  0;   left: calc(50% - 15px); }   /* 2nd base — top    */
+.lv-1b { top:  calc(50% - 15px); right: 0;  }   /* 1st base — right  */
+.lv-3b { top:  calc(50% - 15px); left:  0;  }   /* 3rd base — left   */
+/* Home plate */
+.lv-hp-sq {
+  position: absolute;
+  bottom: 0; left: calc(50% - 12px);
+  width: 24px; height: 24px;
   background: var(--surface4);
-  transform: none;
-  margin: auto;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  transform: rotate(45deg);
+  opacity: 0.6;
+}
+/* legacy — unused but keep to avoid any reference errors */
+.lv-home-plate {
+  display: none;
 }
 
 /* BSO count */
