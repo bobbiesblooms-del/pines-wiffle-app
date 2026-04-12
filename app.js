@@ -77,6 +77,8 @@
       players:  {},   // { [id]: { id, name, number, position, team, order } }
       atBats:   [],   // { id, playerId, result, rbi, inning, half, ts }
       gameHistory:   [],
+      bases:    [false, false, false],  // [1st, 2nd, 3rd]
+      currentBatterId: null,
     };
   }
 
@@ -86,6 +88,13 @@
 
   function saveState() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
+    broadcastLiveUpdate();
+  }
+
+  function broadcastLiveUpdate() {
+    if (liveChannel) {
+      try { liveChannel.postMessage({ type: 'update', state, umpBalls, umpStrikes }); } catch (_) {}
+    }
   }
 
   function loadState() {
@@ -151,6 +160,21 @@
 
   let isViewer = false;
 
+  // ─── LIVE BROADCAST ──────────────────────────────────────────────────────────
+
+  let liveChannel = null;
+  try {
+    liveChannel = new BroadcastChannel('pines-wiffle-live');
+    liveChannel.addEventListener('message', e => {
+      if (e.data.type === 'update') {
+        state = Object.assign(defaultState(e.data.state.totalInnings), e.data.state);
+        umpBalls   = e.data.umpBalls   || 0;
+        umpStrikes = e.data.umpStrikes || 0;
+        renderLiveView();
+      }
+    });
+  } catch (_) {}
+
   // Local schedule storage (fallback when no Firebase)
   let schedule = loadSchedule();
 
@@ -183,6 +207,8 @@
     renderStats();
     renderHistory();
     renderUpcomingBanner();
+    renderBases();
+    renderLiveView();
   }
 
   function nextUpcomingGame() {
@@ -439,6 +465,115 @@
     });
   }
 
+  function renderBases() {
+    const bases = state.bases || [false, false, false];
+    document.querySelectorAll('.base-toggle-btn').forEach(btn => {
+      btn.classList.toggle('on', bases[parseInt(btn.dataset.base)]);
+    });
+  }
+
+  function renderLiveView() {
+    const bases = state.bases || [false, false, false];
+    const { totalInnings, currentInning, currentHalf, inningScores, teams } = state;
+
+    // Scores & names
+    document.getElementById('lv-away-name').textContent  = teams.away.name;
+    document.getElementById('lv-home-name').textContent  = teams.home.name;
+    document.getElementById('lv-away-score').textContent = teamRuns('away');
+    document.getElementById('lv-home-score').textContent = teamRuns('home');
+
+    // Inning + outs
+    document.getElementById('lv-inning').innerHTML =
+      ordinal(currentInning) + ' ' + (currentHalf === 'top' ? '&#9650;' : '&#9660;');
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('lv-od-' + i).classList.toggle('filled', i <= state.outs);
+    }
+
+    // BSO
+    document.getElementById('lv-balls').textContent    = umpBalls;
+    document.getElementById('lv-strikes').textContent  = umpStrikes;
+    document.getElementById('lv-outs-num').textContent = state.outs;
+
+    // Base diamond
+    document.getElementById('lv-base-1').classList.toggle('occupied', bases[0]);
+    document.getElementById('lv-base-2').classList.toggle('occupied', bases[1]);
+    document.getElementById('lv-base-3').classList.toggle('occupied', bases[2]);
+
+    // Current batter card
+    const batter = state.currentBatterId ? state.players[state.currentBatterId] : null;
+    if (batter) {
+      const s = playerStats(batter.id);
+      document.getElementById('lv-batter-name').textContent =
+        (batter.number ? '#' + batter.number + ' ' : '') + batter.name;
+      document.getElementById('lv-batter-stats').textContent =
+        s.AVG + ' AVG \u00b7 ' + s.HR + ' HR \u00b7 ' + s.RBI + ' RBI';
+    } else {
+      document.getElementById('lv-batter-name').innerHTML = '&mdash;';
+      document.getElementById('lv-batter-stats').textContent = '';
+    }
+
+    // Scoreboard
+    const hdrs = document.getElementById('lv-sb-inning-headers');
+    hdrs.innerHTML = '';
+    for (let i = 1; i <= totalInnings; i++) {
+      const el = document.createElement('div');
+      el.className = 'sb-cell-header';
+      el.textContent = i;
+      hdrs.appendChild(el);
+    }
+    const awayEl = document.getElementById('lv-sb-away-scores');
+    awayEl.innerHTML = '';
+    for (let i = 0; i < totalInnings; i++) {
+      const el = document.createElement('div');
+      el.className = 'sb-cell';
+      if (i + 1 === currentInning && currentHalf === 'top') el.classList.add('active');
+      el.textContent = inningScores[i]?.away ?? 0;
+      awayEl.appendChild(el);
+    }
+    const homeEl = document.getElementById('lv-sb-home-scores');
+    homeEl.innerHTML = '';
+    for (let i = 0; i < totalInnings; i++) {
+      const el = document.createElement('div');
+      el.className = 'sb-cell';
+      if (i + 1 === currentInning && currentHalf === 'bottom') el.classList.add('active');
+      el.textContent = inningScores[i]?.home ?? 0;
+      homeEl.appendChild(el);
+    }
+    document.getElementById('lv-sb-away-name').textContent   = teams.away.name;
+    document.getElementById('lv-sb-home-name').textContent   = teams.home.name;
+    document.getElementById('lv-sb-away-runs').textContent   = teamRuns('away');
+    document.getElementById('lv-sb-home-runs').textContent   = teamRuns('home');
+    document.getElementById('lv-sb-away-hits').textContent   = teamHits('away');
+    document.getElementById('lv-sb-home-hits').textContent   = teamHits('home');
+
+    // Recent plays (no delete button)
+    const log = document.getElementById('lv-play-log');
+    if (state.atBats.length === 0) {
+      log.innerHTML = '<p class="empty">No plays yet</p>';
+      return;
+    }
+    log.innerHTML = '';
+    [...state.atBats].reverse().slice(0, 10).forEach(ab => {
+      const p = state.players[ab.playerId];
+      const pName = p ? p.name : 'Unknown';
+      const r = ab.result;
+      let cls = 'badge-hit';
+      if (r === 'HR') cls = 'badge-hr';
+      else if (['K', 'Out', 'SF', 'E'].includes(r)) cls = 'badge-out';
+      else if (['BB', 'HBP'].includes(r)) cls = 'badge-walk';
+      const div = document.createElement('div');
+      div.className = 'play-item';
+      div.innerHTML =
+        `<span class="play-badge ${cls}">${r}</span>` +
+        `<div class="play-info">` +
+          `<div class="play-player">${esc(pName)}</div>` +
+          `<div class="play-meta">Inn ${ab.inning}${ab.half === 'top' ? '▲' : '▼'}` +
+          (ab.rbi ? ` \u00b7 ${ab.rbi} RBI` : '') + `</div>` +
+        `</div>`;
+      log.appendChild(div);
+    });
+  }
+
   function renderLeaderboard() {
     const players = Object.values(state.players);
 
@@ -646,6 +781,29 @@
     const pid = document.getElementById('ump-batter').value;
     if (pid) playSong(pid);
     else stopSong();
+    state.currentBatterId = pid || null;
+    broadcastLiveUpdate();
+    renderLiveView();
+  });
+
+  // ─── BASE RUNNERS ────────────────────────────────────────────────────────────
+
+  document.querySelectorAll('.base-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!state.bases) state.bases = [false, false, false];
+      const idx = parseInt(btn.dataset.base);
+      state.bases[idx] = !state.bases[idx];
+      saveState();
+      renderBases();
+      renderLiveView();
+    });
+  });
+
+  document.getElementById('bases-clear').addEventListener('click', () => {
+    state.bases = [false, false, false];
+    saveState();
+    renderBases();
+    renderLiveView();
   });
 
   // ─── AT-BAT ENTRY STATE ──────────────────────────────────────────────────────
@@ -678,6 +836,7 @@
       if (btn.dataset.tab === 'schedule')    renderSchedule();
       if (btn.dataset.tab === 'gear')        renderGear();
       if (btn.dataset.tab === 'umpire')      renderUmpire();
+      if (btn.dataset.tab === 'live')        renderLiveView();
     });
   });
 
@@ -694,10 +853,14 @@
       }
     }
     state.outs = 0;
+    state.bases = [false, false, false];
+    state.currentBatterId = null;
     saveState();
     renderScoreboard();
     renderGameBar();
     renderBatterSelect();
+    renderBases();
+    renderLiveView();
     resetAtBatUI();
   });
 
@@ -709,10 +872,14 @@
       state.currentHalf = 'bottom';
     }
     state.outs = 0;
+    state.bases = [false, false, false];
+    state.currentBatterId = null;
     saveState();
     renderScoreboard();
     renderGameBar();
     renderBatterSelect();
+    renderBases();
+    renderLiveView();
     resetAtBatUI();
   });
 
@@ -740,6 +907,7 @@
       umpShowCall('BALL ' + umpBalls, 'call-ball');
       renderUmpire();
     }
+    broadcastLiveUpdate(); renderLiveView();
   });
 
   document.getElementById('ump-strike').addEventListener('click', () => {
@@ -753,6 +921,7 @@
       umpShowCall('STRIKE ' + umpStrikes, 'call-strike');
       renderUmpire();
     }
+    broadcastLiveUpdate(); renderLiveView();
   });
 
   document.getElementById('ump-foul').addEventListener('click', () => {
@@ -764,6 +933,7 @@
       umpShowCall('FOUL BALL', 'call-foul');
     }
     renderUmpire();
+    broadcastLiveUpdate(); renderLiveView();
   });
 
   document.getElementById('ump-out').addEventListener('click', () => {
@@ -771,11 +941,13 @@
     umpLogAtBat('Out', 0);
     umpAdvanceOuts();
     umpResetCount();
+    broadcastLiveUpdate(); renderLiveView();
   });
 
   document.getElementById('ump-reset').addEventListener('click', () => {
     umpResetCount();
     umpShowCall('Count Reset', 'call-event');
+    broadcastLiveUpdate(); renderLiveView();
   });
 
   document.getElementById('ump-next-half').addEventListener('click', () => {
@@ -790,10 +962,14 @@
       }
     }
     state.outs = 0;
+    state.bases = [false, false, false];
+    state.currentBatterId = null;
     umpResetCount();
     saveState();
     renderScoreboard();
     renderGameBar();
+    renderBases();
+    renderLiveView();
     renderUmpire();
   });
 
@@ -808,6 +984,13 @@
       renderScoreboard();
       renderQuickScore();
     });
+  });
+
+  // Track current batter for live view
+  document.getElementById('batter-select').addEventListener('change', () => {
+    state.currentBatterId = document.getElementById('batter-select').value || null;
+    broadcastLiveUpdate();
+    renderLiveView();
   });
 
   // Result buttons

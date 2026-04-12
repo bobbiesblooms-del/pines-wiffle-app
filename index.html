@@ -42,6 +42,7 @@
     <button class="nav-tab" data-tab="stats"><span class="tab-icon">📊</span><span class="tab-label">Stats</span></button>
     <button class="nav-tab" data-tab="leaderboard"><span class="tab-icon">🏆</span><span class="tab-label">Leaders</span></button>
     <button class="nav-tab" data-tab="history"><span class="tab-icon">📋</span><span class="tab-label">History</span></button>
+    <button class="nav-tab" data-tab="live"><span class="tab-icon">📺</span><span class="tab-label">Live</span></button>
     <button class="nav-tab" data-tab="gear"><span class="tab-icon">🛒</span><span class="tab-label">Gear</span></button>
   </nav>
 
@@ -100,6 +101,13 @@
             <button id="prev-half" class="btn btn-sm btn-ghost">&larr;</button>
             <button id="next-half" class="btn btn-sm btn-primary">Next &rarr;</button>
           </div>
+        </div>
+        <div class="bases-bar">
+          <span class="bases-label">Runners</span>
+          <button class="base-toggle-btn" data-base="2">3B</button>
+          <button class="base-toggle-btn" data-base="1">2B</button>
+          <button class="base-toggle-btn" data-base="0">1B</button>
+          <button id="bases-clear" class="btn btn-xs btn-ghost">Clear</button>
         </div>
       </div>
 
@@ -334,6 +342,110 @@
           <p class="empty">No past games</p>
         </div>
       </div>
+    </div>
+
+    <!-- LIVE VIEW TAB -->
+    <div id="tab-live" class="tab-pane">
+
+      <div class="lv-hero">
+        <div class="lv-live-badge"><span class="lv-live-dot"></span>Live</div>
+
+        <div class="lv-scores">
+          <div class="lv-team-block">
+            <div id="lv-away-name" class="lv-team-name">Away</div>
+            <div id="lv-away-score" class="lv-team-score">0</div>
+          </div>
+          <div class="lv-score-sep">
+            <div id="lv-inning" class="lv-inning-label">1st &#9650;</div>
+            <div class="lv-outs-dots">
+              <span id="lv-od-1" class="lv-out-dot"></span>
+              <span id="lv-od-2" class="lv-out-dot"></span>
+              <span id="lv-od-3" class="lv-out-dot"></span>
+            </div>
+          </div>
+          <div class="lv-team-block">
+            <div id="lv-home-name" class="lv-team-name">Home</div>
+            <div id="lv-home-score" class="lv-team-score">0</div>
+          </div>
+        </div>
+
+        <div class="lv-situation">
+          <div class="lv-diamond-wrap">
+            <div class="lv-diamond-label">Runners</div>
+            <div class="lv-diamond-grid">
+              <div></div>
+              <div id="lv-base-2" class="lv-base"></div>
+              <div></div>
+              <div id="lv-base-3" class="lv-base"></div>
+              <div class="lv-diamond-center"></div>
+              <div id="lv-base-1" class="lv-base"></div>
+              <div></div>
+              <div class="lv-home-plate"></div>
+              <div></div>
+            </div>
+          </div>
+
+          <div class="lv-bso-wrap">
+            <div class="lv-bso-label-top">Count</div>
+            <div class="lv-bso-row">
+              <div class="lv-bso-item">
+                <div id="lv-balls" class="lv-bso-num">0</div>
+                <div class="lv-bso-key">B</div>
+              </div>
+              <div class="lv-bso-item">
+                <div id="lv-strikes" class="lv-bso-num">0</div>
+                <div class="lv-bso-key">S</div>
+              </div>
+              <div class="lv-bso-item">
+                <div id="lv-outs-num" class="lv-bso-num">0</div>
+                <div class="lv-bso-key">O</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card lv-batter-card">
+        <div class="lv-at-bat-label">At Bat</div>
+        <div id="lv-batter-name" class="lv-batter-name">&mdash;</div>
+        <div id="lv-batter-stats" class="lv-batter-stats"></div>
+      </div>
+
+      <div class="scoreboard-card">
+        <div class="scoreboard-scroll">
+          <div class="scoreboard">
+            <div class="sb-row sb-header">
+              <div class="sb-team-col"></div>
+              <div id="lv-sb-inning-headers" class="sb-innings"></div>
+              <div class="sb-totals-header"><span>R</span><span>H</span></div>
+            </div>
+            <div class="sb-row">
+              <div class="sb-team-col" id="lv-sb-away-name">Away</div>
+              <div id="lv-sb-away-scores" class="sb-innings"></div>
+              <div class="sb-totals">
+                <span id="lv-sb-away-runs" class="sb-runs">0</span>
+                <span id="lv-sb-away-hits">0</span>
+              </div>
+            </div>
+            <div class="sb-row">
+              <div class="sb-team-col" id="lv-sb-home-name">Home</div>
+              <div id="lv-sb-home-scores" class="sb-innings"></div>
+              <div class="sb-totals">
+                <span id="lv-sb-home-runs" class="sb-runs">0</span>
+                <span id="lv-sb-home-hits">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recent Plays</div>
+        <div id="lv-play-log" class="play-log">
+          <p class="empty">No plays yet</p>
+        </div>
+      </div>
+
     </div>
 
     <!-- GEAR TAB -->

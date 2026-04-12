@@ -1568,4 +1568,283 @@ body.viewer-mode .qs-controls .btn-score,
 body.viewer-mode #add-out-btn,
 body.viewer-mode #undo-out-btn { display: none !important; }
 
+/* ═══ BASE RUNNERS BAR (game tab) ════════════════ */
+.bases-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: rgba(0,0,0,.2);
+  border-top: 1px solid var(--border);
+}
+.bases-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-right: 2px;
+}
+.base-toggle-btn {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-lt);
+  background: var(--surface3);
+  color: var(--text-3);
+  letter-spacing: 0.3px;
+  transition: background var(--t), color var(--t), border-color var(--t), box-shadow var(--t);
+}
+.base-toggle-btn.on {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #000;
+  box-shadow: 0 0 8px var(--amber-glow);
+}
+.bases-bar .btn-ghost { margin-left: auto; }
+
+/* ═══ LIVE VIEW TAB ══════════════════════════════ */
+.lv-hero {
+  background: linear-gradient(160deg, #0a1628 0%, #060e1c 60%, #080c18 100%);
+  border: 1px solid var(--border-lt);
+  border-radius: var(--r-xl);
+  margin-bottom: 12px;
+  padding: 20px 16px 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.lv-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+.lv-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--green);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  position: relative;
+}
+.lv-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,.6); }
+  50% { opacity: .7; transform: scale(1.15); box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+}
+
+.lv-scores {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+  position: relative;
+}
+.lv-team-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.lv-team-name {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-2);
+  text-align: center;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lv-team-score {
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -3px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.lv-score-sep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+.lv-inning-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--blue-lt);
+  white-space: nowrap;
+}
+.lv-outs-dots {
+  display: flex;
+  gap: 5px;
+}
+.lv-out-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--border-lt);
+  display: inline-block;
+  transition: background var(--t), border-color var(--t);
+}
+.lv-out-dot.filled {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+/* Situation row: diamond + BSO */
+.lv-situation {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 4px 0 6px;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+.lv-diamond-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.lv-diamond-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-4);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.lv-diamond-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 36px);
+  grid-template-rows: repeat(3, 36px);
+}
+.lv-base {
+  width: 24px;
+  height: 24px;
+  margin: auto;
+  border: 2px solid var(--border-lt);
+  background: var(--surface3);
+  transform: rotate(45deg);
+  border-radius: 3px;
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+.lv-base.occupied {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 10px var(--amber-glow);
+}
+.lv-home-plate {
+  width: 20px;
+  height: 20px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  border: 2px solid var(--border-lt);
+  background: var(--surface4);
+  transform: none;
+  margin: auto;
+}
+
+/* BSO count */
+.lv-bso-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.lv-bso-label-top {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-4);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.lv-bso-row {
+  display: flex;
+  gap: 10px;
+}
+.lv-bso-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.lv-bso-num {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: center;
+}
+.lv-bso-key {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-3);
+  letter-spacing: 0.5px;
+}
+
+/* Batter card */
+.lv-batter-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 14px 16px !important;
+}
+.lv-at-bat-label {
+  font-size: 9px;
+  font-weight: 900;
+  color: var(--blue-lt);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.lv-batter-name {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.lv-batter-stats {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* Live view play log (no delete button) */
+#lv-play-log .play-item { cursor: default; }
+
+/* Hide share/scorer controls in viewer-mode for live tab */
+body.viewer-mode .bases-bar { display: none !important; }
+
 body.viewer-mode .qs-controls { pointer-events: none; }
