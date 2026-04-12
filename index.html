@@ -156,9 +156,19 @@
 
       <!-- ── AT BAT BAR ── -->
       <div class="gc-atbat-bar">
-        <span class="gc-atbat-label">&#9650; At Bat</span>
+        <button id="prev-batter" class="gc-batter-nav" title="Previous batter">&#8249;</button>
+        <div class="gc-batter-center">
+          <div class="gc-atbat-meta">
+            <span class="gc-atbat-label">&#9650; At Bat</span>
+            <span id="gc-ondeck" class="gc-ondeck-text"></span>
+          </div>
+          <div id="gc-batter-display" class="gc-batter-display">—</div>
+        </div>
+        <button id="next-batter" class="gc-batter-nav" title="Next batter">&#8250;</button>
+      </div>
+      <div class="gc-override-row">
         <select id="batter-select" class="select">
-          <option value="">Select batter&hellip;</option>
+          <option value="">Manual override&hellip;</option>
         </select>
       </div>
 

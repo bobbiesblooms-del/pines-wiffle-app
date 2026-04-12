@@ -1244,11 +1244,38 @@ button { font-family: inherit; cursor: pointer; }
 .gc-atbat-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  background: linear-gradient(90deg, rgba(96,165,250,.07) 0%, transparent 100%);
+  gap: 6px;
+  padding: 10px 10px;
+  background: linear-gradient(90deg, rgba(96,165,250,.08) 0%, transparent 100%);
   border-left: 3px solid var(--blue);
   border-bottom: 1px solid var(--border);
+}
+.gc-batter-nav {
+  background: none;
+  border: 1px solid var(--border-lt);
+  border-radius: 8px;
+  color: var(--text-3);
+  font-size: 22px;
+  line-height: 1;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: color var(--t), background var(--t);
+  flex-shrink: 0;
+}
+.gc-batter-nav:hover { background: var(--surface3); color: var(--text); }
+.gc-batter-nav:active { transform: scale(0.92); }
+
+.gc-batter-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gc-atbat-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .gc-atbat-label {
   font-size: 10px;
@@ -1257,17 +1284,50 @@ button { font-family: inherit; cursor: pointer; }
   letter-spacing: 0.5px;
   white-space: nowrap;
 }
-.gc-atbat-bar .select {
-  flex: 1;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 4px 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  outline: none;
+.gc-ondeck-text {
+  font-size: 10px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.gc-batter-display {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gc-b-badge {
+  color: var(--blue-lt);
+  font-size: 14px;
+}
+.gc-b-name { color: var(--text); }
+.gc-b-empty { color: var(--text-3); font-size: 14px; font-style: italic; }
+
+/* Manual override row */
+.gc-override-row {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.gc-override-row .select {
+  width: 100%;
+  font-size: 12px;
+  padding: 5px 8px;
+  color: var(--text-3);
+}
+
+/* Batting order number in lineup */
+.player-order-num {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--blue-lt);
+  min-width: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.order-btn { font-size: 13px; }
 
 /* ═══ BATTER / COUNT CARD ═══════════════════════ */
 .batter-count-card { padding-bottom: 14px; }

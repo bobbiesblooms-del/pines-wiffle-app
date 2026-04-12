@@ -79,6 +79,7 @@
       gameHistory:   [],
       bases:    [false, false, false],  // [1st, 2nd, 3rd]
       currentBatterId: null,
+      lineupPos: { away: 0, home: 0 }, // batting order position per team
     };
   }
 
@@ -231,6 +232,88 @@
     return state.currentHalf === 'top' ? 'away' : 'home';
   }
 
+  // ─── LINEUP ORDER HELPERS ────────────────────────────────────────────────────
+
+  function getLineup(team) {
+    return Object.values(state.players)
+      .filter(p => p.team === team && p.playing !== false)
+      .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  }
+
+  function currentBatterForTeam(team) {
+    const lineup = getLineup(team);
+    if (!lineup.length) return null;
+    if (!state.lineupPos) state.lineupPos = { away: 0, home: 0 };
+    return lineup[(state.lineupPos[team] || 0) % lineup.length] || null;
+  }
+
+  function onDeckBatterForTeam(team) {
+    const lineup = getLineup(team);
+    if (lineup.length < 2) return null;
+    if (!state.lineupPos) state.lineupPos = { away: 0, home: 0 };
+    return lineup[((state.lineupPos[team] || 0) + 1) % lineup.length] || null;
+  }
+
+  function advanceBatterOrder(team) {
+    const lineup = getLineup(team);
+    if (!lineup.length) return;
+    if (!state.lineupPos) state.lineupPos = { away: 0, home: 0 };
+    state.lineupPos[team] = ((state.lineupPos[team] || 0) + 1) % lineup.length;
+    state.currentBatterId = currentBatterForTeam(team)?.id || null;
+  }
+
+  function stepBatterOrder(team, dir) { // dir: +1 next, -1 prev
+    const lineup = getLineup(team);
+    if (!lineup.length) return;
+    if (!state.lineupPos) state.lineupPos = { away: 0, home: 0 };
+    state.lineupPos[team] = ((state.lineupPos[team] || 0) + dir + lineup.length) % lineup.length;
+    state.currentBatterId = currentBatterForTeam(team)?.id || null;
+  }
+
+  function movePlayerInOrder(id, dir) { // dir: -1 up, +1 down
+    const p = state.players[id];
+    if (!p) return;
+    const sorted = Object.values(state.players)
+      .filter(q => q.team === p.team)
+      .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    sorted.forEach((q, i) => { state.players[q.id].order = i; });
+    const idx = sorted.findIndex(q => q.id === id);
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    state.players[sorted[idx].id].order    = swapIdx;
+    state.players[sorted[swapIdx].id].order = idx;
+    saveState();
+    renderLineup();
+  }
+
+  function renderBatterDisplay() {
+    const team   = battingTeam();
+    const batter = currentBatterForTeam(team);
+    const onDeck = onDeckBatterForTeam(team);
+
+    const display = document.getElementById('gc-batter-display');
+    const deckEl  = document.getElementById('gc-ondeck');
+    const sel     = document.getElementById('batter-select');
+
+    if (batter) {
+      display.innerHTML =
+        (batter.number ? `<span class="gc-b-badge">#${esc(batter.number)}</span> ` : '') +
+        `<span class="gc-b-name">${esc(batter.name)}</span>`;
+      sel.value = batter.id;
+      state.currentBatterId = batter.id;
+    } else {
+      display.innerHTML = '<span class="gc-b-empty">No lineup set</span>';
+      sel.value = '';
+      state.currentBatterId = null;
+    }
+
+    if (deckEl) {
+      deckEl.textContent = onDeck
+        ? 'On Deck: ' + (onDeck.number ? '#' + onDeck.number + ' ' : '') + onDeck.name
+        : '';
+    }
+  }
+
   // ─── VIEWER FLAG ─────────────────────────────────────────────────────────────
 
   let isViewer = false;
@@ -350,6 +433,7 @@
     renderBases();
     renderLiveView();
     renderUmpire();
+    renderBatterDisplay();
   }
 
   function nextUpcomingGame() {
@@ -484,17 +568,18 @@
   function renderBatterSelect() {
     const sel = document.getElementById('batter-select');
     const team = battingTeam();
-    const players = Object.values(state.players)
-      .filter(p => p.team === team && p.playing !== false)
-      .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    const players = getLineup(team);
+    const current = currentBatterForTeam(team);
 
-    sel.innerHTML = '<option value="">Select batter\u2026</option>';
+    sel.innerHTML = '<option value="">Manual override\u2026</option>';
     players.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = (p.number ? '#' + p.number + ' ' : '') + p.name;
+      if (current && p.id === current.id) opt.selected = true;
       sel.appendChild(opt);
     });
+    renderBatterDisplay();
   }
 
   function renderPlayLog() {
@@ -564,14 +649,18 @@
       const isPlaying = p.playing !== false;
       const div = document.createElement('div');
       div.className = 'lineup-item' + (isPlaying ? '' : ' inactive');
+      const orderPos = playing.indexOf(p) + 1; // batting order position (1-based, only for playing)
       div.innerHTML =
         `<button class="player-act-btn player-playing-btn ${isPlaying ? 'on' : ''}" data-action="toggle-playing" data-id="${p.id}" title="${isPlaying ? 'Mark not playing' : 'Mark playing'}">` +
           (isPlaying ? '&#10003;' : '&#9711;') +
         `</button>` +
+        (isPlaying ? `<span class="player-order-num">${orderPos}</span>` : '') +
         `<span class="player-num">${esc(p.number || '—')}</span>` +
         `<span class="player-name">${esc(p.name)}</span>` +
         (p.position ? `<span class="player-pos">${esc(p.position)}</span>` : '') +
         `<div class="player-acts">` +
+          (isPlaying ? `<button class="player-act-btn order-btn" data-action="move-up" data-id="${p.id}" title="Move up in order">&#8593;</button>` : '') +
+          (isPlaying ? `<button class="player-act-btn order-btn" data-action="move-down" data-id="${p.id}" title="Move down in order">&#8595;</button>` : '') +
           (p.song ? `<button class="player-act-btn song-icon" data-action="play-song" data-id="${p.id}" title="Play walkup song">&#127925;</button>` : '') +
           `<button class="player-act-btn switch-team-btn" data-action="switch-team" data-id="${p.id}" title="Move to ${otherName}">&#8644;</button>` +
           `<button class="player-act-btn" data-action="edit" data-id="${p.id}">&#9998;</button>` +
@@ -846,12 +935,14 @@
       id: uid(), playerId: pid, result, rbi: rbi || 0,
       inning: state.currentInning, half: state.currentHalf, ts: Date.now(),
     });
+    advanceBatterOrder(battingTeam());
     saveState();
     renderScoreboard();
     renderQuickScore();
     renderPlayLog();
     renderLiveView();
     renderUmpire();
+    renderBatterSelect();
   }
 
   function umpResetCount() {
@@ -876,6 +967,7 @@
           renderScoreboard();
           renderGameBar();
           renderUmpire();
+          renderBatterSelect();
         }
       }, 300);
     }
@@ -1087,6 +1179,20 @@
     broadcastLiveUpdate(); renderLiveView();
   });
 
+  // Batting order navigation
+  document.getElementById('prev-batter').addEventListener('click', () => {
+    stepBatterOrder(battingTeam(), -1);
+    saveState();
+    renderBatterSelect();
+    broadcastLiveUpdate(); renderLiveView();
+  });
+  document.getElementById('next-batter').addEventListener('click', () => {
+    stepBatterOrder(battingTeam(), 1);
+    saveState();
+    renderBatterSelect();
+    broadcastLiveUpdate(); renderLiveView();
+  });
+
 
   // Quick score
   document.querySelectorAll('.btn-score').forEach(btn => {
@@ -1101,12 +1207,23 @@
     });
   });
 
-  // Track current batter + play walkup song
+  // Manual batter override: sync lineup position and play walkup song
   document.getElementById('batter-select').addEventListener('change', () => {
     const pid = document.getElementById('batter-select').value || null;
+    if (pid) {
+      const team = battingTeam();
+      const lineup = getLineup(team);
+      const idx = lineup.findIndex(p => p.id === pid);
+      if (idx >= 0) {
+        if (!state.lineupPos) state.lineupPos = { away: 0, home: 0 };
+        state.lineupPos[team] = idx;
+      }
+      playSong(pid);
+    } else {
+      stopSong();
+    }
     state.currentBatterId = pid;
-    if (pid) playSong(pid);
-    else stopSong();
+    renderBatterDisplay();
     broadcastLiveUpdate();
     renderLiveView();
   });
@@ -1157,11 +1274,13 @@
       state.outs = Math.min(3, state.outs + 1);
     }
 
+    advanceBatterOrder(battingTeam());
     saveState();
     renderScoreboard();
     renderGameBar();
     renderPlayLog();
     resetAtBatUI();
+    renderBatterSelect();
   });
 
   // Delete play
@@ -1227,7 +1346,11 @@
     const btn = e.target.closest('.player-act-btn');
     if (!btn) return;
     const id = btn.dataset.id;
-    if (btn.dataset.action === 'toggle-playing') {
+    if (btn.dataset.action === 'move-up') {
+      movePlayerInOrder(id, -1);
+    } else if (btn.dataset.action === 'move-down') {
+      movePlayerInOrder(id, 1);
+    } else if (btn.dataset.action === 'toggle-playing') {
       state.players[id].playing = state.players[id].playing === false ? true : false;
       saveState();
       renderLineup();
