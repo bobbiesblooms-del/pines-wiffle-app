@@ -349,6 +349,7 @@
     renderUpcomingBanner();
     renderBases();
     renderLiveView();
+    renderUmpire();
   }
 
   function nextUpcomingGame() {
@@ -812,44 +813,12 @@
   let lastCallTimer = null;
 
   function renderUmpire() {
-    // Score bar
-    document.getElementById('ump-away-name').textContent  = state.teams.away.name;
-    document.getElementById('ump-home-name').textContent  = state.teams.home.name;
-    document.getElementById('ump-away-score').textContent = teamRuns('away');
-    document.getElementById('ump-home-score').textContent = teamRuns('home');
-    document.getElementById('ump-inning').innerHTML =
-      ordinal(state.currentInning) + ' ' + (state.currentHalf === 'top' ? '&#9650;' : '&#9660;');
-
-    // Outs dots
-    for (let i = 1; i <= 3; i++) {
-      document.getElementById('ump-out' + i).classList.toggle('filled', i <= state.outs);
-    }
-
-    // Count dots
+    // Count dots only — scoreboard/batter are shared with game tab
     document.querySelectorAll('.ump-ball-dot').forEach((d, i) => {
       d.classList.toggle('on', i < umpBalls);
     });
     document.querySelectorAll('.ump-strike-dot').forEach((d, i) => {
       d.classList.toggle('on', i < umpStrikes);
-    });
-
-    document.getElementById('ump-balls').textContent   = umpBalls;
-    document.getElementById('ump-strikes').textContent = umpStrikes;
-
-    // Batter select
-    const sel = document.getElementById('ump-batter');
-    const team = battingTeam();
-    const current = sel.value;
-    const players = Object.values(state.players)
-      .filter(p => p.team === team && p.playing !== false)
-      .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
-    sel.innerHTML = '<option value="">Select batter\u2026</option>';
-    players.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = (p.number ? '#' + p.number + ' ' : '') + p.name;
-      if (p.id === current) opt.selected = true;
-      sel.appendChild(opt);
     });
   }
 
@@ -862,7 +831,7 @@
   }
 
   function umpLogAtBat(result, rbi) {
-    const pid = document.getElementById('ump-batter').value;
+    const pid = document.getElementById('batter-select').value;
     if (!pid) return;
     state.atBats.push({
       id: uid(), playerId: pid, result, rbi: rbi || 0,
@@ -872,6 +841,7 @@
     renderScoreboard();
     renderQuickScore();
     renderPlayLog();
+    renderLiveView();
     renderUmpire();
   }
 
@@ -943,14 +913,6 @@
 
   document.getElementById('song-stop').addEventListener('click', stopSong);
 
-  document.getElementById('ump-batter').addEventListener('change', () => {
-    const pid = document.getElementById('ump-batter').value;
-    if (pid) playSong(pid);
-    else stopSong();
-    state.currentBatterId = pid || null;
-    broadcastLiveUpdate();
-    renderLiveView();
-  });
 
   // ─── BASE RUNNERS ────────────────────────────────────────────────────────────
 
@@ -1001,7 +963,6 @@
       if (btn.dataset.tab === 'leaderboard') renderLeaderboard();
       if (btn.dataset.tab === 'schedule')    renderSchedule();
       if (btn.dataset.tab === 'gear')        renderGear();
-      if (btn.dataset.tab === 'umpire')      renderUmpire();
       if (btn.dataset.tab === 'live')        renderLiveView();
     });
   });
@@ -1021,6 +982,7 @@
     state.outs = 0;
     state.bases = [false, false, false];
     state.currentBatterId = null;
+    umpResetCount();
     saveState();
     renderScoreboard();
     renderGameBar();
@@ -1116,28 +1078,6 @@
     broadcastLiveUpdate(); renderLiveView();
   });
 
-  document.getElementById('ump-next-half').addEventListener('click', () => {
-    if (state.currentHalf === 'top') {
-      state.currentHalf = 'bottom';
-    } else {
-      if (state.currentInning < state.totalInnings) {
-        state.currentInning++;
-        state.currentHalf = 'top';
-      } else {
-        state.status = 'final';
-      }
-    }
-    state.outs = 0;
-    state.bases = [false, false, false];
-    state.currentBatterId = null;
-    umpResetCount();
-    saveState();
-    renderScoreboard();
-    renderGameBar();
-    renderBases();
-    renderLiveView();
-    renderUmpire();
-  });
 
   // Quick score
   document.querySelectorAll('.btn-score').forEach(btn => {
@@ -1152,9 +1092,12 @@
     });
   });
 
-  // Track current batter for live view
+  // Track current batter + play walkup song
   document.getElementById('batter-select').addEventListener('change', () => {
-    state.currentBatterId = document.getElementById('batter-select').value || null;
+    const pid = document.getElementById('batter-select').value || null;
+    state.currentBatterId = pid;
+    if (pid) playSong(pid);
+    else stopSong();
     broadcastLiveUpdate();
     renderLiveView();
   });

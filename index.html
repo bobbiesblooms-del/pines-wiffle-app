@@ -36,7 +36,6 @@
 
   <nav class="nav">
     <button class="nav-tab active" data-tab="game"><span class="tab-icon">⚾</span><span class="tab-label">Game</span></button>
-    <button class="nav-tab" data-tab="umpire"><span class="tab-icon">✌️</span><span class="tab-label">Ump</span></button>
     <button class="nav-tab" data-tab="schedule"><span class="tab-icon">📅</span><span class="tab-label">Schedule</span></button>
     <button class="nav-tab" data-tab="lineup"><span class="tab-icon">👥</span><span class="tab-label">Lineup</span></button>
     <button class="nav-tab" data-tab="stats"><span class="tab-icon">📊</span><span class="tab-label">Stats</span></button>
@@ -61,6 +60,7 @@
         </div>
       </div>
 
+      <!-- Scoreboard -->
       <div class="scoreboard-card">
         <div class="scoreboard-scroll">
           <div class="scoreboard">
@@ -87,7 +87,6 @@
             </div>
           </div>
         </div>
-
         <div class="game-bar">
           <span id="inning-label" class="inning-label">1st &#9650;</span>
           <div class="outs-group">
@@ -111,37 +110,51 @@
         </div>
       </div>
 
-      <div class="card qs-card">
-        <div class="card-title">Quick Score</div>
-        <div class="quick-score">
-          <div class="qs-team">
-            <div id="qs-away-name" class="qs-name">Away</div>
-            <div class="qs-controls">
-              <button class="btn btn-score" data-team="away" data-dir="-1">&#8722;</button>
-              <span id="qs-away-score" class="qs-score">0</span>
-              <button class="btn btn-score btn-score-add" data-team="away" data-dir="1">+</button>
-            </div>
-          </div>
-          <div class="qs-vs">VS</div>
-          <div class="qs-team">
-            <div id="qs-home-name" class="qs-name">Home</div>
-            <div class="qs-controls">
-              <button class="btn btn-score" data-team="home" data-dir="-1">&#8722;</button>
-              <span id="qs-home-score" class="qs-score">0</span>
-              <button class="btn btn-score btn-score-add" data-team="home" data-dir="1">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Log At-Bat</div>
+      <!-- Batter select + count dots -->
+      <div class="card batter-count-card">
         <div class="batter-row">
           <label class="field-label">Batter</label>
           <select id="batter-select" class="select">
             <option value="">Select batter&hellip;</option>
           </select>
         </div>
+        <div class="count-row">
+          <div class="count-group">
+            <span class="count-label">B</span>
+            <div class="ump-count-dots" id="ump-ball-dots">
+              <span class="ump-ball-dot"></span>
+              <span class="ump-ball-dot"></span>
+              <span class="ump-ball-dot"></span>
+              <span class="ump-ball-dot"></span>
+            </div>
+          </div>
+          <div class="count-divider"></div>
+          <div class="count-group">
+            <span class="count-label">S</span>
+            <div class="ump-count-dots" id="ump-strike-dots">
+              <span class="ump-strike-dot"></span>
+              <span class="ump-strike-dot"></span>
+              <span class="ump-strike-dot"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ump buttons -->
+      <div class="ump-buttons">
+        <button id="ump-ball"   class="ump-btn ump-ball-btn">BALL</button>
+        <button id="ump-strike" class="ump-btn ump-strike-btn">STRIKE</button>
+        <button id="ump-foul"   class="ump-btn ump-foul-btn">FOUL</button>
+        <button id="ump-out"    class="ump-btn ump-out-btn">OUT</button>
+      </div>
+      <div id="ump-last-call" class="ump-last-call hidden"></div>
+      <div class="ump-controls">
+        <button id="ump-reset" class="btn btn-ghost">&#8635; Reset Count</button>
+      </div>
+
+      <!-- Log result -->
+      <div class="card">
+        <div class="card-title">Log Result</div>
         <div class="result-grid">
           <button class="result-btn" data-result="1B">1B</button>
           <button class="result-btn" data-result="2B">2B</button>
@@ -165,6 +178,31 @@
         </div>
       </div>
 
+      <!-- Quick Score -->
+      <div class="card qs-card">
+        <div class="card-title">Quick Score</div>
+        <div class="quick-score">
+          <div class="qs-team">
+            <div id="qs-away-name" class="qs-name">Away</div>
+            <div class="qs-controls">
+              <button class="btn btn-score" data-team="away" data-dir="-1">&#8722;</button>
+              <span id="qs-away-score" class="qs-score">0</span>
+              <button class="btn btn-score btn-score-add" data-team="away" data-dir="1">+</button>
+            </div>
+          </div>
+          <div class="qs-vs">VS</div>
+          <div class="qs-team">
+            <div id="qs-home-name" class="qs-name">Home</div>
+            <div class="qs-controls">
+              <button class="btn btn-score" data-team="home" data-dir="-1">&#8722;</button>
+              <span id="qs-home-score" class="qs-score">0</span>
+              <button class="btn btn-score btn-score-add" data-team="home" data-dir="1">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Play Log -->
       <div class="card">
         <div class="card-title">Play Log</div>
         <div id="play-log" class="play-log">
@@ -261,79 +299,6 @@
       </div>
     </div>
 
-    <!-- UMPIRE TAB -->
-    <div id="tab-umpire" class="tab-pane">
-
-      <!-- Score bar -->
-      <div class="ump-scorebar">
-        <div class="ump-team">
-          <div id="ump-away-name" class="ump-team-name">Away</div>
-          <div id="ump-away-score" class="ump-team-score">0</div>
-        </div>
-        <div class="ump-mid">
-          <div id="ump-inning" class="ump-inning">1st &#9650;</div>
-          <div id="ump-outs-row" class="ump-outs-row">
-            <span id="ump-out1" class="ump-out-dot"></span>
-            <span id="ump-out2" class="ump-out-dot"></span>
-            <span id="ump-out3" class="ump-out-dot"></span>
-          </div>
-        </div>
-        <div class="ump-team">
-          <div id="ump-home-name" class="ump-team-name">Home</div>
-          <div id="ump-home-score" class="ump-team-score">0</div>
-        </div>
-      </div>
-
-      <!-- Count display -->
-      <div class="ump-count-display">
-        <div class="ump-count-col">
-          <div class="ump-count-label">Balls</div>
-          <div class="ump-count-dots" id="ump-ball-dots">
-            <span class="ump-ball-dot"></span>
-            <span class="ump-ball-dot"></span>
-            <span class="ump-ball-dot"></span>
-            <span class="ump-ball-dot"></span>
-          </div>
-          <div id="ump-balls" class="ump-count-num">0</div>
-        </div>
-        <div class="ump-count-divider">-</div>
-        <div class="ump-count-col">
-          <div class="ump-count-label">Strikes</div>
-          <div class="ump-count-dots" id="ump-strike-dots">
-            <span class="ump-strike-dot"></span>
-            <span class="ump-strike-dot"></span>
-            <span class="ump-strike-dot"></span>
-          </div>
-          <div id="ump-strikes" class="ump-count-num">0</div>
-        </div>
-      </div>
-
-      <!-- Batter selector -->
-      <div class="ump-batter-row">
-        <label class="ump-batter-label">Batter</label>
-        <select id="ump-batter" class="select">
-          <option value="">Select batter&hellip;</option>
-        </select>
-      </div>
-
-      <!-- Action buttons -->
-      <div class="ump-buttons">
-        <button id="ump-ball"   class="ump-btn ump-ball-btn">BALL</button>
-        <button id="ump-strike" class="ump-btn ump-strike-btn">STRIKE</button>
-        <button id="ump-foul"   class="ump-btn ump-foul-btn">FOUL</button>
-        <button id="ump-out"    class="ump-btn ump-out-btn">OUT</button>
-      </div>
-
-      <!-- Secondary controls -->
-      <div class="ump-controls">
-        <button id="ump-reset"     class="btn btn-ghost">&#8635; Reset Count</button>
-        <button id="ump-next-half" class="btn btn-primary">Next Half &rarr;</button>
-      </div>
-
-      <!-- Last call display -->
-      <div id="ump-last-call" class="ump-last-call hidden"></div>
-
-    </div>
 
     <!-- SCHEDULE TAB -->
     <div id="tab-schedule" class="tab-pane">
