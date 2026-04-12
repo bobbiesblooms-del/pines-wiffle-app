@@ -1,4 +1,4 @@
-const CACHE = 'pines-wiffle-v8';
+const CACHE = 'pines-wiffle-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -26,12 +26,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Skip non-GET and external requests
   if (e.request.method !== 'GET') return;
-  if (e.request.url.includes('firebase') || e.request.url.includes('gstatic') ||
-      e.request.url.includes('api.github.com') || e.request.url.includes('qrserver')) return;
+  if (e.request.url.includes('qrserver') || e.request.url.includes('fonts.googleapis') ||
+      e.request.url.includes('fonts.gstatic')) return;
 
-  // Network first — always try to get fresh files, fall back to cache if offline
+  // Network first — fresh files, fall back to cache offline
   e.respondWith(
     fetch(e.request).then(res => {
       const clone = res.clone();

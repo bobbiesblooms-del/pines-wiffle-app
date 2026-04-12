@@ -77,7 +77,6 @@
       players:  {},   // { [id]: { id, name, number, position, team, order } }
       atBats:   [],   // { id, playerId, result, rbi, inning, half, ts }
       gameHistory:   [],
-      firebaseConfig: null,
     };
   }
 
@@ -87,8 +86,6 @@
 
   function saveState() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
-    fbSync();
-    if (isGistLive()) gistPush();
   }
 
   function loadState() {
@@ -150,123 +147,9 @@
     return state.currentHalf === 'top' ? 'away' : 'home';
   }
 
-  // ─── FIREBASE ────────────────────────────────────────────────────────────────
+  // ─── VIEWER FLAG ─────────────────────────────────────────────────────────────
 
-  let fbRef = null;
-  let fbScheduleRef = null;
   let isViewer = false;
-  let fbReady = false;
-
-  // ─── GITHUB GIST BACKEND ─────────────────────────────────────────────────────
-
-  let gistId    = null;
-  let gistToken = null;
-  let gistPollTimer = null;
-
-  function gistSaveConfig() {
-    try {
-      localStorage.setItem('pines-wiffle-gist', JSON.stringify({ gistId, gistToken }));
-    } catch (_) {}
-  }
-
-  function gistLoadConfig() {
-    try {
-      const d = JSON.parse(localStorage.getItem('pines-wiffle-gist') || '{}');
-      gistId    = d.gistId    || null;
-      gistToken = d.gistToken || null;
-    } catch (_) {}
-  }
-
-  async function gistCreate(token) {
-    const res = await fetch('https://api.github.com/gists', {
-      method: 'POST',
-      headers: { Authorization: 'token ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        description: 'Pines Wiffle live game state',
-        public: false,
-        files: { 'game.json': { content: JSON.stringify(state) } },
-      }),
-    });
-    if (!res.ok) throw new Error('GitHub API error ' + res.status);
-    const data = await res.json();
-    return data.id;
-  }
-
-  async function gistPush() {
-    if (!gistId || !gistToken || isViewer) return;
-    try {
-      await fetch('https://api.github.com/gists/' + gistId, {
-        method: 'PATCH',
-        headers: { Authorization: 'token ' + gistToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: { 'game.json': { content: JSON.stringify(state) } } }),
-      });
-    } catch (_) {}
-  }
-
-  async function gistPoll() {
-    if (!gistId) return;
-    try {
-      const res = await fetch('https://api.github.com/gists/' + gistId, {
-        headers: gistToken ? { Authorization: 'token ' + gistToken } : {},
-        cache: 'no-store',
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      const content = data.files?.['game.json']?.content;
-      if (content) {
-        const parsed = JSON.parse(content);
-        state = Object.assign(defaultState(parsed.totalInnings), parsed);
-        renderAll();
-        renderUmpire();
-        const banner = document.getElementById('viewer-banner');
-        if (banner) {
-          const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          banner.innerHTML = '<span class="live-badge">&#9679; LIVE</span><span>Watching live &mdash; last updated ' + t + '</span>';
-        }
-      }
-    } catch (_) {}
-  }
-
-  async function gistConnect(token) {
-    gistToken = token;
-    // Reuse existing gist if we have one, otherwise create
-    if (!gistId) {
-      gistId = await gistCreate(token);
-    }
-    gistSaveConfig();
-    // Push current state immediately
-    await gistPush();
-    startGistPushInterval();
-    document.getElementById('live-indicator').classList.remove('hidden');
-    document.getElementById('golive-btn').textContent = '🔴 Live';
-    document.getElementById('golive-btn').classList.add('btn-live-active');
-  }
-
-  function startGistPushInterval() {
-    // Host pushes state every 5 seconds automatically
-    if (gistPollTimer) clearInterval(gistPollTimer);
-    gistPollTimer = setInterval(() => { if (!isViewer) gistPush(); }, 5000);
-  }
-
-  function startGistPollInterval() {
-    // Viewer polls every 5 seconds
-    if (gistPollTimer) clearInterval(gistPollTimer);
-    gistPoll(); // immediate first fetch
-    gistPollTimer = setInterval(gistPoll, 5000);
-  }
-
-  function gistDisconnect() {
-    if (gistPollTimer) clearInterval(gistPollTimer);
-    gistPollTimer = null;
-    gistId    = null;
-    gistToken = null;
-    localStorage.removeItem('pines-wiffle-gist');
-    document.getElementById('live-indicator').classList.add('hidden');
-    document.getElementById('golive-btn').textContent = '📷 Go Live';
-    document.getElementById('golive-btn').classList.remove('btn-live-active');
-  }
-
-  function isGistLive() { return !!(gistId && gistToken && !isViewer); }
 
   // Local schedule storage (fallback when no Firebase)
   let schedule = loadSchedule();
@@ -281,68 +164,11 @@
     try { localStorage.setItem('pines-wiffle-schedule', JSON.stringify(schedule)); } catch (_) {}
   }
 
-  function fbInit(cfg) {
-    if (typeof firebase === 'undefined') return false;
-    try {
-      if (!firebase.apps.length) firebase.initializeApp(cfg);
-      const db = firebase.database();
-      fbRef = db.ref('games/' + state.gameId);
-      fbReady = true;
+  // ─── SHARE URL ───────────────────────────────────────────────────────────────
 
-      // Shared schedule ref — same for all users
-      fbScheduleRef = db.ref('schedule');
-      fbScheduleRef.on('value', snap => {
-        const data = snap.val();
-        schedule = data ? Object.values(data) : [];
-        saveScheduleLocal();
-        renderSchedule();
-        renderUpcomingBanner();
-      });
-
-      if (isViewer) {
-        // Viewers subscribe to live game state
-        fbRef.on('value', snap => {
-          const data = snap.val();
-          if (data) { state = data; renderAll(); renderUmpire(); }
-        });
-      } else {
-        // Push current state immediately so viewers see it right away
-        fbSync();
-      }
-
-      document.getElementById('live-indicator').classList.remove('hidden');
-      document.getElementById('golive-btn').textContent = '🔴 Live';
-      document.getElementById('golive-btn').classList.add('btn-live-active');
-      return true;
-    } catch (e) {
-      console.warn('Firebase init error:', e);
-      return false;
-    }
-  }
-
-  function fbDisconnect() {
-    if (fbRef)         { fbRef.off();         fbRef = null; }
-    if (fbScheduleRef) { fbScheduleRef.off(); fbScheduleRef = null; }
-    fbReady = false;
-    state.firebaseConfig = null;
-    saveState();
-    document.getElementById('live-indicator').classList.add('hidden');
-    document.getElementById('golive-btn').textContent = '📷 Go Live';
-    document.getElementById('golive-btn').classList.remove('btn-live-active');
-    if (firebase.apps.length) firebase.apps[0].delete().catch(() => {});
-  }
-
-  function fbSync() {
-    if (!fbRef || !fbReady || isViewer) return;
-    fbRef.set(state).catch(() => {});
-  }
-
-  function fbSyncSchedule() {
-    if (!fbScheduleRef) return;
-    // Write each game by its id so merges work cleanly
-    const obj = {};
-    schedule.forEach(g => { obj[g.id] = g; });
-    fbScheduleRef.set(obj).catch(() => {});
+  function makeShareUrl() {
+    const data = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    return location.origin + location.pathname + '?share=' + data;
   }
 
   // ─── RENDER ──────────────────────────────────────────────────────────────────
@@ -383,14 +209,6 @@
 
   function renderSchedule() {
     const list = document.getElementById('schedule-list');
-    const notice = document.getElementById('firebase-notice');
-
-    // Show Firebase notice if not connected
-    if (!fbReady) {
-      notice.classList.remove('hidden');
-    } else {
-      notice.classList.add('hidden');
-    }
 
     const sorted = [...schedule].sort((a, b) =>
       new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00'))
@@ -1172,7 +990,6 @@
     // Reset player stats (keep roster, clear at-bats)
     fresh.atBats = [];
     fresh.gameHistory = history;
-    fresh.firebaseConfig = state.firebaseConfig;
     state = fresh;
     saveState();
     renderAll();
@@ -1183,7 +1000,6 @@
     const history = state.gameHistory || [];
     const fresh = defaultState(state.totalInnings);
     fresh.gameHistory = history;
-    fresh.firebaseConfig = state.firebaseConfig;
     state = fresh;
     saveState();
     renderAll();
@@ -1234,7 +1050,6 @@
     else schedule.push(game);
 
     saveScheduleLocal();
-    fbSyncSchedule();
     renderSchedule();
     renderUpcomingBanner();
     closeModal('schedule-modal');
@@ -1249,7 +1064,6 @@
       if (!confirm('Delete this scheduled game?')) return;
       schedule = schedule.filter(g => g.id !== id);
       saveScheduleLocal();
-      fbSyncSchedule();
       renderSchedule();
       renderUpcomingBanner();
     }
@@ -1269,67 +1083,16 @@
     }
   });
 
-  // ─── GO LIVE ─────────────────────────────────────────────────────────────────
+  // ─── SHARE ───────────────────────────────────────────────────────────────────
 
-  // Method tab switching
-  document.querySelectorAll('.method-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.method-tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.method-panel').forEach(p => p.classList.add('hidden'));
-      btn.classList.add('active');
-      document.getElementById('method-' + btn.dataset.method).classList.remove('hidden');
-    });
-  });
-
-  // Gist connect
-  document.getElementById('gist-connect').addEventListener('click', async () => {
-    const token = document.getElementById('gist-token').value.trim();
-    if (!token) { alert('Please paste your GitHub token.'); return; }
-    const btn = document.getElementById('gist-connect');
-    btn.textContent = 'Connecting…';
-    btn.disabled = true;
-    try {
-      await gistConnect(token);
-      showConnectedView();
-    } catch (e) {
-      btn.textContent = 'Failed — check your token';
-      btn.style.background = 'var(--danger)';
-      btn.disabled = false;
-    }
-  });
-
-  function showLiveModal() {
-    if (fbReady || isGistLive()) {
-      showConnectedView();
-    } else {
-      document.getElementById('live-setup').classList.remove('hidden');
-      document.getElementById('live-connected').classList.add('hidden');
-      if (state.firebaseConfig) {
-        document.getElementById('fb-url').value     = state.firebaseConfig.databaseURL || '';
-        document.getElementById('fb-key').value     = state.firebaseConfig.apiKey      || '';
-        document.getElementById('fb-project').value = state.firebaseConfig.projectId   || '';
-      }
-      if (gistToken) {
-        document.getElementById('gist-token').value = gistToken;
-      }
-    }
-    openModal('share-modal');
-  }
-
-  function showConnectedView() {
-    document.getElementById('live-setup').classList.add('hidden');
-    document.getElementById('live-connected').classList.remove('hidden');
-    // Gist link takes priority over Firebase link
-    const liveUrl = gistId
-      ? location.origin + location.pathname + '?gist=' + gistId
-      : location.origin + location.pathname + '?game=' + state.gameId;
-    document.getElementById('share-url').value = liveUrl;
+  document.getElementById('golive-btn').addEventListener('click', () => {
+    const url = makeShareUrl();
+    document.getElementById('share-url').value = url;
     document.getElementById('qr-img').src =
-      'https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=e8eaf0&bgcolor=1a1d27&data=' +
-      encodeURIComponent(liveUrl);
-  }
-
-  document.getElementById('golive-btn').addEventListener('click', showLiveModal);
+      'https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=f1f5fb&bgcolor=0c1220&data=' +
+      encodeURIComponent(url);
+    openModal('share-modal');
+  });
 
   document.getElementById('copy-btn').addEventListener('click', () => {
     const url = document.getElementById('share-url').value;
@@ -1339,43 +1102,11 @@
     });
     const btn = document.getElementById('copy-btn');
     const prev = btn.textContent;
-    btn.textContent = 'Copied!';
+    btn.textContent = '✓ Copied!';
     setTimeout(() => (btn.textContent = prev), 2000);
   });
 
-  document.getElementById('fb-connect').addEventListener('click', () => {
-    const cfg = {
-      databaseURL: document.getElementById('fb-url').value.trim(),
-      apiKey:      document.getElementById('fb-key').value.trim(),
-      projectId:   document.getElementById('fb-project').value.trim(),
-    };
-    if (!cfg.databaseURL || !cfg.apiKey || !cfg.projectId) {
-      alert('Please fill in all three Firebase fields.');
-      return;
-    }
-    cfg.authDomain = cfg.projectId + '.firebaseapp.com';
-    state.firebaseConfig = cfg;
-    saveState();
-
-    const btn = document.getElementById('fb-connect');
-    const ok = fbInit(cfg);
-    if (ok) {
-      showConnectedView();
-    } else {
-      btn.textContent = 'Connection failed — check credentials';
-      btn.style.background = 'var(--danger)';
-    }
-  });
-
-  document.getElementById('share-close').addEventListener('click',   () => closeModal('share-modal'));
-  document.getElementById('share-close-2').addEventListener('click', () => closeModal('share-modal'));
-
-  document.getElementById('fb-disconnect').addEventListener('click', () => {
-    if (!confirm('Disconnect? Viewers will stop receiving live updates.')) return;
-    fbDisconnect();
-    gistDisconnect();
-    closeModal('share-modal');
-  });
+  document.getElementById('share-close').addEventListener('click', () => closeModal('share-modal'));
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
@@ -1413,67 +1144,22 @@
 
   function checkViewerMode() {
     const params = new URLSearchParams(location.search);
-
-    if (params.has('share')) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(params.get('share')))));
-        state = Object.assign(defaultState(decoded.totalInnings), decoded);
-        isViewer = true;
-        document.body.classList.add('viewer-mode');
-        document.getElementById('viewer-banner').classList.remove('hidden');
-        document.getElementById('golive-btn').textContent = '👁 Watching';
-        document.getElementById('golive-btn').disabled = true;
-      } catch (e) {
-        console.warn('Bad share data');
-      }
-    }
-
-    // Gist-based live view — no login needed to watch
-    if (params.has('gist')) {
-      gistId    = params.get('gist');
-      gistToken = null; // viewers don't need a token for public gist reads
-      isViewer  = true;
-      document.body.classList.add('viewer-mode');
-      document.getElementById('viewer-banner').classList.remove('hidden');
-      document.getElementById('golive-btn').textContent = '👁 Watching';
-      document.getElementById('golive-btn').disabled = true;
-      startGistPollInterval();
-    }
-
-    // Firebase-based live view
-    if (params.has('game')) {
+    if (!params.has('share')) return;
+    try {
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(params.get('share')))));
+      state = Object.assign(defaultState(decoded.totalInnings), decoded);
       isViewer = true;
       document.body.classList.add('viewer-mode');
       document.getElementById('viewer-banner').classList.remove('hidden');
-      document.getElementById('golive-btn').textContent = '👁 Watching';
-      document.getElementById('golive-btn').disabled = true;
-
-      const gameId = params.get('game');
-      state.gameId = gameId;
-      if (state.firebaseConfig) {
-        fbInit(state.firebaseConfig);
-      } else {
-        document.getElementById('viewer-banner').innerHTML =
-          '<span class="live-badge">&#9679; LIVE</span>' +
-          '<span>To watch live, tap <strong>👁 Watching</strong> and connect Firebase.</span>';
-        document.getElementById('golive-btn').disabled = false;
-        document.getElementById('golive-btn').addEventListener('click', () => {
-          document.getElementById('live-setup').classList.remove('hidden');
-          document.getElementById('live-connected').classList.add('hidden');
-          openModal('share-modal');
-        }, { once: true });
-      }
+      document.getElementById('golive-btn').style.display = 'none';
+    } catch (e) {
+      console.warn('Bad share data');
     }
   }
 
   // ─── INIT ────────────────────────────────────────────────────────────────────
 
-  gistLoadConfig();
   checkViewerMode();
-  if (!isViewer) {
-    if (state.firebaseConfig) fbInit(state.firebaseConfig);
-    if (isGistLive()) startGistPushInterval();
-  }
   renderAll();
   renderGear();
 
