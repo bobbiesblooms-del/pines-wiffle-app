@@ -18,7 +18,10 @@
 <div id="app">
 
   <header class="header">
-    <h1 class="app-title">Pines Wiffle</h1>
+    <div class="header-brand">
+      <span class="brand-ball">⚾</span>
+      <h1 class="app-title">Pines <span class="title-accent">Wiffle</span></h1>
+    </div>
     <div class="header-right">
       <span id="live-indicator" class="live-indicator hidden">&#9679; LIVE</span>
       <button id="golive-btn" class="btn btn-golive btn-sm">&#128247; Go Live</button>
@@ -32,14 +35,14 @@
   </div>
 
   <nav class="nav">
-    <button class="nav-tab active" data-tab="game">Game</button>
-    <button class="nav-tab" data-tab="umpire">&#9997; Ump</button>
-    <button class="nav-tab" data-tab="schedule">Schedule</button>
-    <button class="nav-tab" data-tab="lineup">Lineup</button>
-    <button class="nav-tab" data-tab="stats">Stats</button>
-    <button class="nav-tab" data-tab="leaderboard">Leaders</button>
-    <button class="nav-tab" data-tab="history">History</button>
-    <button class="nav-tab" data-tab="gear">Gear</button>
+    <button class="nav-tab active" data-tab="game"><span class="tab-icon">⚾</span><span class="tab-label">Game</span></button>
+    <button class="nav-tab" data-tab="umpire"><span class="tab-icon">✌️</span><span class="tab-label">Ump</span></button>
+    <button class="nav-tab" data-tab="schedule"><span class="tab-icon">📅</span><span class="tab-label">Schedule</span></button>
+    <button class="nav-tab" data-tab="lineup"><span class="tab-icon">👥</span><span class="tab-label">Lineup</span></button>
+    <button class="nav-tab" data-tab="stats"><span class="tab-icon">📊</span><span class="tab-label">Stats</span></button>
+    <button class="nav-tab" data-tab="leaderboard"><span class="tab-icon">🏆</span><span class="tab-label">Leaders</span></button>
+    <button class="nav-tab" data-tab="history"><span class="tab-icon">📋</span><span class="tab-label">History</span></button>
+    <button class="nav-tab" data-tab="gear"><span class="tab-icon">🛒</span><span class="tab-label">Gear</span></button>
   </nav>
 
   <main class="main">
@@ -100,7 +103,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card qs-card">
         <div class="card-title">Quick Score</div>
         <div class="quick-score">
           <div class="qs-team">

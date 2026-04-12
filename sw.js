@@ -1,4 +1,4 @@
-const CACHE = 'pines-wiffle-v7';
+const CACHE = 'pines-wiffle-v8';
 const ASSETS = [
   './',
   './index.html',
