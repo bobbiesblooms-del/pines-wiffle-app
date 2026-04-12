@@ -1269,12 +1269,8 @@
   // ─── SHARE ───────────────────────────────────────────────────────────────────
 
   document.getElementById('golive-btn').addEventListener('click', () => {
-    const url = makeShareUrl();
-    document.getElementById('share-url').value = url;
-    document.getElementById('qr-img').src =
-      'https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=f1f5fb&bgcolor=0c1220&data=' +
-      encodeURIComponent(url);
-    openModal('share-modal');
+    const url = location.origin + location.pathname + '?watch=1';
+    window.open(url, '_blank');
   });
 
   document.getElementById('copy-btn').addEventListener('click', () => {
@@ -1345,6 +1341,15 @@
   checkViewerMode();
   renderAll();
   renderGear();
+
+  // If opened via Watch button, jump straight to the Live tab
+  if (new URLSearchParams(location.search).has('watch')) {
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="live"]').classList.add('active');
+    document.getElementById('tab-live').classList.add('active');
+    renderLiveView();
+  }
 
   // Register service worker for PWA / offline support
   if ('serviceWorker' in navigator) {
