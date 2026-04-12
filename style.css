@@ -992,6 +992,256 @@ button { font-family: inherit; cursor: pointer; }
 .gear-desc { font-size: 12px; color: var(--text-3); }
 .gear-arrow { font-size: 18px; color: var(--text-4); flex-shrink: 0; }
 
+/* ═══ GAMECHANGER-STYLE SCORING LAYOUT ══════════ */
+
+/* Hero score bar */
+.gc-hero {
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(160deg, #060e1f 0%, #0a1628 50%, #060e1f 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 12px 12px;
+  gap: 4px;
+}
+.gc-team-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.gc-team-side.gc-right { align-items: flex-end; }
+.gc-team-name {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+.gc-score-num {
+  font-size: 60px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.gc-score-adj {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.gc-score-adj .btn-score {
+  width: 30px;
+  height: 26px;
+  font-size: 16px;
+  padding: 0;
+  border-radius: 6px;
+}
+
+.gc-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-width: 90px;
+  padding: 0 8px;
+}
+.gc-inning-tag {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+.gc-outs-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.gc-out-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--surface4);
+  border: 1.5px solid var(--border-lt);
+  transition: background var(--t), border-color var(--t);
+}
+.gc-out-dot.filled {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 6px rgba(245,158,11,.5);
+}
+.gc-out-adj-row {
+  display: flex;
+  gap: 4px;
+}
+.gc-out-adj-row .btn { font-size: 10px; padding: 3px 7px; }
+.gc-nav-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+.gc-nav-row .btn { font-size: 11px; padding: 5px 9px; }
+
+/* Situation row: diamond + BSO */
+.gc-situation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #080f1e 0%, #0a1225 100%);
+  padding: 18px 20px 14px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Diamond */
+.gc-diamond-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.gc-diamond-field {
+  position: relative;
+  width: 130px;
+  height: 130px;
+}
+.gc-diamond-field::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  transform: translate(-50%, -54%) rotate(45deg);
+  border: 2px solid rgba(96,165,250,.22);
+  border-radius: 4px;
+  background: rgba(96,165,250,.03);
+}
+.gc-base {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  background: var(--surface3);
+  border: 2px solid rgba(148,163,184,.25);
+  transform: rotate(45deg);
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
+}
+.gc-base.occupied {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 12px rgba(245,158,11,.6);
+}
+/* 2B top-center */
+.gc-2b { top: 5px;  left: 52px; }
+/* 3B left */
+.gc-3b { top: 52px; left: 5px;  }
+/* 1B right */
+.gc-1b { top: 52px; left: 98px; }
+/* Home plate */
+.gc-hp {
+  position: absolute;
+  bottom: 5px;
+  left: 52px;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  background: var(--surface4);
+  border: 2px solid rgba(148,163,184,.2);
+  transform: rotate(45deg);
+}
+.gc-base-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.gc-base-btns .base-toggle-btn {
+  font-size: 10px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-lt);
+  border-radius: 5px;
+  background: var(--surface2);
+  color: var(--text-3);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--t), color var(--t), border-color var(--t);
+}
+.gc-base-btns .base-toggle-btn.on {
+  background: rgba(245,158,11,.15);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.gc-base-btns .btn { font-size: 10px; padding: 4px 8px; }
+
+/* BSO panel */
+.gc-bso-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.gc-bso-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.gc-bso-num {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: right;
+}
+.gc-b-num { color: #4ade80; }
+.gc-s-num { color: #f87171; }
+.gc-o-num { color: var(--amber); }
+.gc-bso-key {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+
+/* At Bat bar */
+.gc-atbat-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: linear-gradient(90deg, rgba(96,165,250,.07) 0%, transparent 100%);
+  border-left: 3px solid var(--blue);
+  border-bottom: 1px solid var(--border);
+}
+.gc-atbat-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--blue-lt);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.gc-atbat-bar .select {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 4px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+}
+
 /* ═══ BATTER / COUNT CARD ═══════════════════════ */
 .batter-count-card { padding-bottom: 14px; }
 

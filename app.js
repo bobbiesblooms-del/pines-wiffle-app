@@ -453,17 +453,25 @@
     document.getElementById('sb-home-runs').textContent = teamRuns('home');
     document.getElementById('sb-away-hits').textContent = teamHits('away');
     document.getElementById('sb-home-hits').textContent = teamHits('home');
+
+    // GC hero score bar
+    document.getElementById('gc-away-name').textContent  = teams.away.name;
+    document.getElementById('gc-home-name').textContent  = teams.home.name;
+    document.getElementById('gc-away-score').textContent = teamRuns('away');
+    document.getElementById('gc-home-score').textContent = teamRuns('home');
   }
 
   function renderGameBar() {
     const { currentInning, currentHalf, outs } = state;
-    document.getElementById('inning-label').textContent =
-      ordinal(currentInning) + ' ' + (currentHalf === 'top' ? '▲' : '▼');
+    const inningText = ordinal(currentInning) + ' ' + (currentHalf === 'top' ? '▲' : '▼');
+    document.getElementById('inning-label').textContent = inningText;
+    document.getElementById('gc-inning').textContent = inningText;
 
     for (let i = 1; i <= 3; i++) {
-      const dot = document.getElementById('out' + i);
-      dot.classList.toggle('filled', i <= outs);
+      document.getElementById('out' + i).classList.toggle('filled', i <= outs);
+      document.getElementById('gc-out' + i).classList.toggle('filled', i <= outs);
     }
+    document.getElementById('gc-outs-count').textContent = outs;
   }
 
   function renderQuickScore() {
@@ -636,6 +644,11 @@
     const bases = state.bases || [false, false, false];
     document.querySelectorAll('.base-toggle-btn').forEach(btn => {
       btn.classList.toggle('on', bases[parseInt(btn.dataset.base)]);
+    });
+    // GC diamond
+    ['gc-base-1', 'gc-base-2', 'gc-base-3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('occupied', bases[i]);
     });
   }
 
@@ -813,13 +826,9 @@
   let lastCallTimer = null;
 
   function renderUmpire() {
-    // Count dots only — scoreboard/batter are shared with game tab
-    document.querySelectorAll('.ump-ball-dot').forEach((d, i) => {
-      d.classList.toggle('on', i < umpBalls);
-    });
-    document.querySelectorAll('.ump-strike-dot').forEach((d, i) => {
-      d.classList.toggle('on', i < umpStrikes);
-    });
+    // GC BSO numbers
+    document.getElementById('gc-balls').textContent   = umpBalls;
+    document.getElementById('gc-strikes').textContent = umpStrikes;
   }
 
   function umpShowCall(text, cls) {

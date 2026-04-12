@@ -49,7 +49,8 @@
 
     <!-- GAME TAB -->
     <div id="tab-game" class="tab-pane active">
-      <!-- Upcoming game banner (shown when a game is scheduled) -->
+
+      <!-- Upcoming game banner -->
       <div id="upcoming-banner" class="upcoming-banner hidden">
         <div class="upcoming-inner">
           <span class="upcoming-icon">&#128197;</span>
@@ -60,87 +61,86 @@
         </div>
       </div>
 
-      <!-- Scoreboard -->
-      <div class="scoreboard-card">
-        <div class="scoreboard-scroll">
-          <div class="scoreboard">
-            <div class="sb-row sb-header">
-              <div class="sb-team-col"></div>
-              <div id="sb-inning-headers" class="sb-innings"></div>
-              <div class="sb-totals-header"><span>R</span><span>H</span></div>
-            </div>
-            <div class="sb-row">
-              <div class="sb-team-col" id="sb-away-name">Away</div>
-              <div id="sb-away-scores" class="sb-innings"></div>
-              <div class="sb-totals">
-                <span id="sb-away-runs" class="sb-runs">0</span>
-                <span id="sb-away-hits">0</span>
-              </div>
-            </div>
-            <div class="sb-row">
-              <div class="sb-team-col" id="sb-home-name">Home</div>
-              <div id="sb-home-scores" class="sb-innings"></div>
-              <div class="sb-totals">
-                <span id="sb-home-runs" class="sb-runs">0</span>
-                <span id="sb-home-hits">0</span>
-              </div>
-            </div>
+      <!-- ── GC HERO SCORE BAR ── -->
+      <div class="gc-hero">
+        <div class="gc-team-side">
+          <div id="gc-away-name" class="gc-team-name">Away</div>
+          <div id="gc-away-score" class="gc-score-num">0</div>
+          <div class="gc-score-adj">
+            <button class="btn btn-score" data-team="away" data-dir="-1">&#8722;</button>
+            <button class="btn btn-score btn-score-add" data-team="away" data-dir="1">+</button>
           </div>
         </div>
-        <div class="game-bar">
-          <span id="inning-label" class="inning-label">1st &#9650;</span>
-          <div class="outs-group">
-            <span id="out1" class="out-dot"></span>
-            <span id="out2" class="out-dot"></span>
-            <span id="out3" class="out-dot"></span>
+        <div class="gc-mid">
+          <div id="gc-inning" class="gc-inning-tag">1st &#9650;</div>
+          <div class="gc-outs-row">
+            <span id="gc-out1" class="gc-out-dot"></span>
+            <span id="gc-out2" class="gc-out-dot"></span>
+            <span id="gc-out3" class="gc-out-dot"></span>
+          </div>
+          <div class="gc-out-adj-row">
             <button id="add-out-btn" class="btn btn-xs btn-ghost">+Out</button>
             <button id="undo-out-btn" class="btn btn-xs btn-ghost">-Out</button>
           </div>
-          <div class="half-btns">
-            <button id="prev-half" class="btn btn-sm btn-ghost">&larr;</button>
-            <button id="next-half" class="btn btn-sm btn-primary">Next &rarr;</button>
+          <div class="gc-nav-row">
+            <button id="prev-half" class="btn btn-xs btn-ghost">&#8249; Prev</button>
+            <button id="next-half" class="btn btn-sm btn-primary">Next &#8250;</button>
           </div>
         </div>
-        <div class="bases-bar">
-          <span class="bases-label">Runners</span>
-          <button class="base-toggle-btn" data-base="2">3B</button>
-          <button class="base-toggle-btn" data-base="1">2B</button>
-          <button class="base-toggle-btn" data-base="0">1B</button>
-          <button id="bases-clear" class="btn btn-xs btn-ghost">Clear</button>
-        </div>
-      </div>
-
-      <!-- Batter select + count dots -->
-      <div class="card batter-count-card">
-        <div class="batter-row">
-          <label class="field-label">Batter</label>
-          <select id="batter-select" class="select">
-            <option value="">Select batter&hellip;</option>
-          </select>
-        </div>
-        <div class="count-row">
-          <div class="count-group">
-            <span class="count-label">B</span>
-            <div class="ump-count-dots" id="ump-ball-dots">
-              <span class="ump-ball-dot"></span>
-              <span class="ump-ball-dot"></span>
-              <span class="ump-ball-dot"></span>
-              <span class="ump-ball-dot"></span>
-            </div>
-          </div>
-          <div class="count-divider"></div>
-          <div class="count-group">
-            <span class="count-label">S</span>
-            <div class="ump-count-dots" id="ump-strike-dots">
-              <span class="ump-strike-dot"></span>
-              <span class="ump-strike-dot"></span>
-              <span class="ump-strike-dot"></span>
-            </div>
+        <div class="gc-team-side gc-right">
+          <div id="gc-home-name" class="gc-team-name">Home</div>
+          <div id="gc-home-score" class="gc-score-num">0</div>
+          <div class="gc-score-adj">
+            <button class="btn btn-score" data-team="home" data-dir="-1">&#8722;</button>
+            <button class="btn btn-score btn-score-add" data-team="home" data-dir="1">+</button>
           </div>
         </div>
       </div>
 
-      <!-- Ump buttons -->
+      <!-- ── GC SITUATION: Diamond + BSO ── -->
+      <div class="gc-situation">
+
+        <div class="gc-diamond-panel">
+          <div class="gc-diamond-field">
+            <div id="gc-base-2" class="gc-base gc-2b"></div>
+            <div id="gc-base-3" class="gc-base gc-3b"></div>
+            <div id="gc-base-1" class="gc-base gc-1b"></div>
+            <div class="gc-hp"></div>
+          </div>
+          <div class="gc-base-btns">
+            <button class="base-toggle-btn" data-base="2">3B</button>
+            <button class="base-toggle-btn" data-base="1">2B</button>
+            <button class="base-toggle-btn" data-base="0">1B</button>
+            <button id="bases-clear" class="btn btn-xs btn-ghost">Clr</button>
+          </div>
+        </div>
+
+        <div class="gc-bso-panel">
+          <div class="gc-bso-item">
+            <div id="gc-balls" class="gc-bso-num gc-b-num">0</div>
+            <div class="gc-bso-key">B</div>
+          </div>
+          <div class="gc-bso-item">
+            <div id="gc-strikes" class="gc-bso-num gc-s-num">0</div>
+            <div class="gc-bso-key">S</div>
+          </div>
+          <div class="gc-bso-item">
+            <div id="gc-outs-count" class="gc-bso-num gc-o-num">0</div>
+            <div class="gc-bso-key">O</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── AT BAT BAR ── -->
+      <div class="gc-atbat-bar">
+        <span class="gc-atbat-label">&#9650; At Bat</span>
+        <select id="batter-select" class="select">
+          <option value="">Select batter&hellip;</option>
+        </select>
+      </div>
+
+      <!-- ── PITCH BUTTONS ── -->
       <div class="ump-buttons">
         <button id="ump-ball"   class="ump-btn ump-ball-btn">BALL</button>
         <button id="ump-strike" class="ump-btn ump-strike-btn">STRIKE</button>
@@ -152,7 +152,7 @@
         <button id="ump-reset" class="btn btn-ghost">&#8635; Reset Count</button>
       </div>
 
-      <!-- Log result -->
+      <!-- ── LOG RESULT ── -->
       <div class="card">
         <div class="card-title">Log Result</div>
         <div class="result-grid">
@@ -178,36 +178,25 @@
         </div>
       </div>
 
-      <!-- Quick Score -->
-      <div class="card qs-card">
-        <div class="card-title">Quick Score</div>
-        <div class="quick-score">
-          <div class="qs-team">
-            <div id="qs-away-name" class="qs-name">Away</div>
-            <div class="qs-controls">
-              <button class="btn btn-score" data-team="away" data-dir="-1">&#8722;</button>
-              <span id="qs-away-score" class="qs-score">0</span>
-              <button class="btn btn-score btn-score-add" data-team="away" data-dir="1">+</button>
-            </div>
-          </div>
-          <div class="qs-vs">VS</div>
-          <div class="qs-team">
-            <div id="qs-home-name" class="qs-name">Home</div>
-            <div class="qs-controls">
-              <button class="btn btn-score" data-team="home" data-dir="-1">&#8722;</button>
-              <span id="qs-home-score" class="qs-score">0</span>
-              <button class="btn btn-score btn-score-add" data-team="home" data-dir="1">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Play Log -->
+      <!-- ── PLAY LOG ── -->
       <div class="card">
         <div class="card-title">Play Log</div>
         <div id="play-log" class="play-log">
           <p class="empty">No plays logged yet</p>
         </div>
+      </div>
+
+      <!-- Hidden scoreboard elements kept for renderScoreboard() compatibility -->
+      <div style="display:none">
+        <div id="sb-inning-headers"></div>
+        <div id="sb-away-name"></div><div id="sb-away-scores"></div>
+        <span id="sb-away-runs"></span><span id="sb-away-hits"></span>
+        <div id="sb-home-name"></div><div id="sb-home-scores"></div>
+        <span id="sb-home-runs"></span><span id="sb-home-hits"></span>
+        <span id="inning-label"></span>
+        <span id="out1"></span><span id="out2"></span><span id="out3"></span>
+        <span id="qs-away-name"></span><span id="qs-away-score"></span>
+        <span id="qs-home-name"></span><span id="qs-home-score"></span>
       </div>
 
     </div>
