@@ -366,6 +366,11 @@
         <option value="OF">OF</option>
       </select>
     </div>
+    <div class="field">
+      <label>&#127925; Walkup Song</label>
+      <input id="pm-song" class="input" type="text" placeholder="Paste a YouTube link" autocomplete="off">
+      <div class="song-hint">e.g. https://www.youtube.com/watch?v=...</div>
+    </div>
     <div class="modal-actions">
       <button id="pm-cancel" class="btn btn-ghost">Cancel</button>
       <button id="pm-save" class="btn btn-primary">Save</button>
@@ -537,6 +542,22 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<!-- WALKUP SONG PLAYER (floating bar) -->
+<div id="now-playing" class="now-playing hidden">
+  <div class="now-playing-inner">
+    <span class="now-playing-icon">&#127925;</span>
+    <div class="now-playing-info">
+      <div id="now-playing-name" class="now-playing-name">Player</div>
+      <div class="now-playing-label">Walkup Song</div>
+    </div>
+    <button id="song-stop" class="btn btn-xs btn-danger">&#9646;&#9646; Stop</button>
+  </div>
+  <!-- Hidden YouTube iframe for audio playback -->
+  <iframe id="yt-player" width="0" height="0" frameborder="0"
+    allow="autoplay; encrypted-media"
+    allowfullscreen style="display:none"></iframe>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

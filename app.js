@@ -569,6 +569,7 @@
         `<span class="player-name">${esc(p.name)}</span>` +
         (p.position ? `<span class="player-pos">${esc(p.position)}</span>` : '') +
         `<div class="player-acts">` +
+          (p.song ? `<button class="player-act-btn song-icon" data-action="play-song" data-id="${p.id}" title="Play walkup song">&#127925;</button>` : '') +
           `<button class="player-act-btn" data-action="edit" data-id="${p.id}">&#9998;</button>` +
           `<button class="player-act-btn del" data-action="del" data-id="${p.id}">&#128465;</button>` +
         `</div>`;
@@ -784,6 +785,50 @@
     renderGameBar();
     renderUmpire();
   }
+
+  // ─── WALKUP SONGS ────────────────────────────────────────────────────────────
+
+  function ytVideoId(url) {
+    if (!url) return null;
+    // youtu.be/ID
+    let m = url.match(/youtu\.be\/([^?&]+)/);
+    if (m) return m[1];
+    // youtube.com/watch?v=ID
+    m = url.match(/[?&]v=([^?&]+)/);
+    if (m) return m[1];
+    // youtube.com/embed/ID
+    m = url.match(/embed\/([^?&]+)/);
+    if (m) return m[1];
+    return null;
+  }
+
+  function playSong(playerId) {
+    const player = state.players[playerId];
+    if (!player || !player.song) return;
+    const vid = ytVideoId(player.song);
+    if (!vid) return;
+
+    const iframe = document.getElementById('yt-player');
+    iframe.src = 'https://www.youtube.com/embed/' + vid + '?autoplay=1&enablejsapi=1';
+
+    document.getElementById('now-playing-name').textContent = player.name;
+    document.getElementById('now-playing').classList.remove('hidden');
+    document.body.classList.add('song-playing');
+  }
+
+  function stopSong() {
+    document.getElementById('yt-player').src = '';
+    document.getElementById('now-playing').classList.add('hidden');
+    document.body.classList.remove('song-playing');
+  }
+
+  document.getElementById('song-stop').addEventListener('click', stopSong);
+
+  document.getElementById('ump-batter').addEventListener('change', () => {
+    const pid = document.getElementById('ump-batter').value;
+    if (pid) playSong(pid);
+    else stopSong();
+  });
 
   // ─── AT-BAT ENTRY STATE ──────────────────────────────────────────────────────
 
@@ -1030,6 +1075,7 @@
     document.getElementById('pm-name').value = '';
     document.getElementById('pm-number').value = '';
     document.getElementById('pm-position').value = '';
+    document.getElementById('pm-song').value = '';
     openModal('player-modal');
     setTimeout(() => document.getElementById('pm-name').focus(), 80);
   });
@@ -1045,6 +1091,7 @@
       name,
       number:   document.getElementById('pm-number').value.trim(),
       position: document.getElementById('pm-position').value,
+      song:     document.getElementById('pm-song').value.trim(),
       team:     lineupTeam,
       order:    existing ? existing.order : Object.values(state.players).filter(p => p.team === lineupTeam).length,
     };
@@ -1067,7 +1114,10 @@
       document.getElementById('pm-name').value     = p.name;
       document.getElementById('pm-number').value   = p.number || '';
       document.getElementById('pm-position').value = p.position || '';
+      document.getElementById('pm-song').value     = p.song || '';
       openModal('player-modal');
+    } else if (btn.dataset.action === 'play-song') {
+      playSong(id);
     } else if (btn.dataset.action === 'del') {
       if (!confirm('Remove ' + state.players[id].name + '?')) return;
       delete state.players[id];
