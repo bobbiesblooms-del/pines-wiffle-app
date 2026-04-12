@@ -695,6 +695,38 @@ button { font-family: inherit; cursor: pointer; }
 .song-icon { font-size: 14px; transition: transform var(--t); }
 .song-icon:hover { transform: scale(1.2) !important; }
 
+/* Playing toggle button */
+.player-playing-btn {
+  font-size: 15px;
+  min-width: 28px;
+  color: var(--text-3);
+  border-radius: 50% !important;
+}
+.player-playing-btn.on {
+  color: #22c55e;
+}
+.player-playing-btn:hover { background: var(--surface4) !important; }
+
+/* Switch-team button */
+.switch-team-btn { font-size: 16px; }
+
+/* Inactive player row */
+.lineup-item.inactive {
+  opacity: 0.45;
+  border-left-color: var(--border) !important;
+}
+
+/* Section headers inside lineup list */
+.lineup-section-hdr {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 14px 4px;
+}
+.lineup-section-hdr.inactive-hdr { color: var(--text-4, var(--text-3)); }
+
 /* ═══ TEAM TOGGLE ═════════════════════════════ */
 .team-toggle-row {
   display: flex;

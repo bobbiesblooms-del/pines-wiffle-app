@@ -476,7 +476,7 @@
     const sel = document.getElementById('batter-select');
     const team = battingTeam();
     const players = Object.values(state.players)
-      .filter(p => p.team === team)
+      .filter(p => p.team === team && p.playing !== false)
       .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
 
     sel.innerHTML = '<option value="">Select batter\u2026</option>';
@@ -536,29 +536,55 @@
   function renderLineup() {
     document.getElementById('lineup-title').textContent = state.teams[lineupTeam].name;
     const list = document.getElementById('lineup-list');
-    const players = Object.values(state.players)
+    const allTeamPlayers = Object.values(state.players)
       .filter(p => p.team === lineupTeam)
       .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    const otherTeam = lineupTeam === 'away' ? 'home' : 'away';
+    const otherName = state.teams[otherTeam].name;
 
-    if (players.length === 0) {
+    if (allTeamPlayers.length === 0) {
       list.innerHTML = '<p class="empty">No players yet</p>';
       return;
     }
     list.innerHTML = '';
-    players.forEach(p => {
+
+    const playing    = allTeamPlayers.filter(p => p.playing !== false);
+    const notPlaying = allTeamPlayers.filter(p => p.playing === false);
+
+    function makeRow(p) {
+      const isPlaying = p.playing !== false;
       const div = document.createElement('div');
-      div.className = 'lineup-item';
+      div.className = 'lineup-item' + (isPlaying ? '' : ' inactive');
       div.innerHTML =
+        `<button class="player-act-btn player-playing-btn ${isPlaying ? 'on' : ''}" data-action="toggle-playing" data-id="${p.id}" title="${isPlaying ? 'Mark not playing' : 'Mark playing'}">` +
+          (isPlaying ? '&#10003;' : '&#9711;') +
+        `</button>` +
         `<span class="player-num">${esc(p.number || '—')}</span>` +
         `<span class="player-name">${esc(p.name)}</span>` +
         (p.position ? `<span class="player-pos">${esc(p.position)}</span>` : '') +
         `<div class="player-acts">` +
           (p.song ? `<button class="player-act-btn song-icon" data-action="play-song" data-id="${p.id}" title="Play walkup song">&#127925;</button>` : '') +
+          `<button class="player-act-btn switch-team-btn" data-action="switch-team" data-id="${p.id}" title="Move to ${otherName}">&#8644;</button>` +
           `<button class="player-act-btn" data-action="edit" data-id="${p.id}">&#9998;</button>` +
           `<button class="player-act-btn del" data-action="del" data-id="${p.id}">&#128465;</button>` +
         `</div>`;
       list.appendChild(div);
-    });
+    }
+
+    if (playing.length > 0) {
+      const hdr = document.createElement('div');
+      hdr.className = 'lineup-section-hdr';
+      hdr.textContent = 'Playing';
+      list.appendChild(hdr);
+      playing.forEach(makeRow);
+    }
+    if (notPlaying.length > 0) {
+      const hdr = document.createElement('div');
+      hdr.className = 'lineup-section-hdr inactive-hdr';
+      hdr.textContent = 'Not Playing';
+      list.appendChild(hdr);
+      notPlaying.forEach(makeRow);
+    }
   }
 
   let statsTeam = 'away';
@@ -815,7 +841,7 @@
     const team = battingTeam();
     const current = sel.value;
     const players = Object.values(state.players)
-      .filter(p => p.team === team)
+      .filter(p => p.team === team && p.playing !== false)
       .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
     sel.innerHTML = '<option value="">Select batter\u2026</option>';
     players.forEach(p => {
@@ -1235,6 +1261,7 @@
       song:     document.getElementById('pm-song').value.trim(),
       team:     lineupTeam,
       order:    existing ? existing.order : Object.values(state.players).filter(p => p.team === lineupTeam).length,
+      playing:  existing ? existing.playing : true,
     };
 
     saveState();
@@ -1248,7 +1275,18 @@
     const btn = e.target.closest('.player-act-btn');
     if (!btn) return;
     const id = btn.dataset.id;
-    if (btn.dataset.action === 'edit') {
+    if (btn.dataset.action === 'toggle-playing') {
+      state.players[id].playing = state.players[id].playing === false ? true : false;
+      saveState();
+      renderLineup();
+      renderBatterSelect();
+    } else if (btn.dataset.action === 'switch-team') {
+      const p = state.players[id];
+      p.team = p.team === 'away' ? 'home' : 'away';
+      saveState();
+      renderLineup();
+      renderBatterSelect();
+    } else if (btn.dataset.action === 'edit') {
       const p = state.players[id];
       editingPlayerId = id;
       document.getElementById('player-modal-title').textContent = 'Edit Player';
