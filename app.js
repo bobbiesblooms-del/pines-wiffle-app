@@ -1351,8 +1351,8 @@
   // ─── SHARE ───────────────────────────────────────────────────────────────────
 
   document.getElementById('golive-btn').addEventListener('click', () => {
-    const url = location.origin + location.pathname + '?watch=1';
-    window.open(url, '_blank');
+    const base = location.href.replace(/\/[^/]*$/, '/');
+    window.open(base + 'spectator.html', '_blank');
   });
 
   document.getElementById('copy-btn').addEventListener('click', () => {

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Pines Wiffle — Live</title>
+  <meta name="theme-color" content="#060a12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #060a12;
+      --surface:  #0c1220;
+      --surface2: #111827;
+      --surface3: #16202f;
+      --surface4: #1c2a3e;
+      --border:   #1a2540;
+      --border-lt:#243250;
+      --text:     #f1f5fb;
+      --text-2:   #9baec8;
+      --text-3:   #4f6280;
+      --blue:     #3b82f6;
+      --blue-lt:  #60a5fa;
+      --green:    #22c55e;
+      --amber:    #f59e0b;
+      --amber-glow: rgba(245,158,11,.3);
+      --red:      #ef4444;
+      --hit:      #22c55e;
+      --hr:       #f59e0b;
+      --out:      #ef4444;
+      --walk:     #3b82f6;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LAYOUT ── */
+    .sp-wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 0 40px;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    .sp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 12px;
+      background: linear-gradient(180deg, #0e1828 0%, var(--surface) 100%);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .sp-live-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34,197,94,.12);
+      border: 1px solid rgba(34,197,94,.25);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--green);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .sp-live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: blink 1.8s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100%{ opacity:1; box-shadow:0 0 0 0 rgba(34,197,94,.5); }
+      50%{ opacity:.6; box-shadow:0 0 0 4px rgba(34,197,94,0); }
+    }
+    .sp-brand {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+    }
+    .sp-brand span { color: var(--blue-lt); }
+    .sp-pill-final {
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--red);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .sp-pill-final.hidden { display: none; }
+
+    /* ── HERO SCORES ── */
+    .sp-hero {
+      background: linear-gradient(160deg, #0a1628 0%, #060e1c 60%, #080c18 100%);
+      border-bottom: 1px solid var(--border-lt);
+      padding: 28px 20px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .sp-hero::before {
+      content:'';
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(59,130,246,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px);
+      background-size:20px 20px;
+      pointer-events:none;
+    }
+    .sp-scores-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .sp-team-block {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .sp-team-name {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-2);
+      text-align: center;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sp-score {
+      font-size: 72px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -4px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .sp-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+    }
+    .sp-inning-lbl {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--blue-lt);
+      white-space: nowrap;
+    }
+    .sp-out-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .sp-out-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      border: 2px solid var(--border-lt);
+      transition: background .15s, border-color .15s;
+    }
+    .sp-out-dot.on {
+      background: var(--amber);
+      border-color: var(--amber);
+    }
+
+    /* ── SITUATION (diamond + BSO) ── */
+    .sp-situation {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 18px 20px 14px;
+      border-top: 1px solid var(--border);
+      margin-top: 18px;
+      position: relative;
+    }
+
+    /* Diamond */
+    .sp-diamond {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+    .sp-diamond::before {
+      content:'';
+      position:absolute;
+      top:50%; left:50%;
+      width: 80px; height: 80px;
+      margin: -40px 0 0 -40px;
+      border: 1.5px solid var(--border-lt);
+      transform: rotate(45deg);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    .sp-base {
+      position: absolute;
+      width: 34px; height: 34px;
+      background: var(--surface3);
+      border: 2px solid var(--border-lt);
+      border-radius: 4px;
+      transform: rotate(45deg);
+      transition: background .15s, border-color .15s, box-shadow .2s;
+    }
+    .sp-base.on {
+      background: var(--amber);
+      border-color: var(--amber);
+      box-shadow: 0 0 18px var(--amber-glow);
+    }
+    .sp-2b { top: 0;              left: calc(50% - 17px); }
+    .sp-1b { top: calc(50% - 17px); right: 0; }
+    .sp-3b { top: calc(50% - 17px); left: 0; }
+    .sp-hp {
+      position: absolute;
+      bottom: 0; left: calc(50% - 13px);
+      width: 26px; height: 26px;
+      background: var(--surface4);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      transform: rotate(45deg);
+      opacity: 0.55;
+    }
+
+    /* BSO */
+    .sp-bso {
+      display: flex;
+      gap: 16px;
+    }
+    .sp-bso-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .sp-bso-num {
+      font-size: 40px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -2px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      min-width: 36px;
+      text-align: center;
+    }
+    .sp-bso-key {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-3);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── CARDS ── */
+    .sp-card {
+      margin: 10px 14px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 16px;
+    }
+    .sp-card-label {
+      font-size: 9px;
+      font-weight: 900;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 10px;
+    }
+
+    /* ── AT BAT ── */
+    .sp-batter-card {
+      text-align: center;
+      padding: 16px !important;
+    }
+    .sp-batter-label {
+      font-size: 9px;
+      font-weight: 900;
+      color: var(--blue-lt);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .sp-batter-name {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .sp-batter-stats {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    /* ── SCOREBOARD ── */
+    .sp-sb-scroll { overflow-x: auto; }
+    .sp-sb-table {
+      width: 100%;
+      min-width: max-content;
+      border-collapse: collapse;
+    }
+    .sp-sb-table th, .sp-sb-table td {
+      text-align: center;
+      padding: 6px 4px;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+    .sp-sb-table thead th {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-3);
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sp-sb-table tbody tr + tr { border-top: 1px solid var(--border); }
+    .sp-sb-team {
+      text-align: left !important;
+      font-weight: 900;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: -0.2px;
+      padding-right: 10px !important;
+      white-space: nowrap;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sp-sb-cell { min-width: 28px; }
+    .sp-sb-cell.active {
+      background: var(--blue);
+      color: #fff;
+      font-weight: 800;
+      border-radius: 5px;
+    }
+    .sp-sb-runs {
+      font-size: 20px !important;
+      font-weight: 900 !important;
+      color: var(--text) !important;
+    }
+    .sp-sb-hits { color: var(--text-2); }
+    .sp-sb-totals-label {
+      font-weight: 800;
+      color: var(--text-3);
+      border-left: 1px solid var(--border);
+      padding-left: 8px !important;
+    }
+
+    /* ── PLAYS ── */
+    .sp-play-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .sp-play-item + .sp-play-item { border-top: 1px solid var(--border); }
+    .sp-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 7px;
+      border-radius: 6px;
+      min-width: 38px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+    .badge-hit  { background: rgba(34,197,94,.15);  color: var(--hit);  border:1px solid rgba(34,197,94,.3); }
+    .badge-hr   { background: rgba(245,158,11,.15); color: var(--hr);   border:1px solid rgba(245,158,11,.3); }
+    .badge-out  { background: rgba(239,68,68,.12);  color: var(--out);  border:1px solid rgba(239,68,68,.25); }
+    .badge-walk { background: rgba(59,130,246,.12); color: var(--walk); border:1px solid rgba(59,130,246,.25); }
+    .sp-play-info { flex: 1; }
+    .sp-play-player { font-size: 14px; font-weight: 700; }
+    .sp-play-meta   { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+
+    /* ── NO GAME ── */
+    .sp-no-game {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-3);
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .sp-no-game-icon { font-size: 48px; opacity: .4; }
+    .sp-no-game h2 { font-size: 18px; font-weight: 800; color: var(--text-2); }
+    .sp-no-game p  { font-size: 13px; line-height: 1.5; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="sp-wrap">
+
+  <header class="sp-header">
+    <div id="sp-live-pill" class="sp-live-pill">
+      <span class="sp-live-dot"></span>Live
+    </div>
+    <div class="sp-brand">Pines <span>Wiffle</span></div>
+    <div id="sp-final-pill" class="sp-pill-final hidden">Final</div>
+  </header>
+
+  <!-- No game state -->
+  <div id="sp-no-game" class="sp-no-game">
+    <div class="sp-no-game-icon">⚾</div>
+    <h2>No active game</h2>
+    <p>Open the Pines Wiffle scorer app and start a game. This page will update automatically.</p>
+  </div>
+
+  <!-- Game content -->
+  <div id="sp-game" class="hidden">
+
+    <div class="sp-hero">
+      <div class="sp-scores-row">
+        <div class="sp-team-block">
+          <div id="sp-away-name" class="sp-team-name">Away</div>
+          <div id="sp-away-score" class="sp-score">0</div>
+        </div>
+        <div class="sp-mid">
+          <div id="sp-inning" class="sp-inning-lbl">1st &#9650;</div>
+          <div class="sp-out-dots">
+            <span id="sp-od-1" class="sp-out-dot"></span>
+            <span id="sp-od-2" class="sp-out-dot"></span>
+            <span id="sp-od-3" class="sp-out-dot"></span>
+          </div>
+        </div>
+        <div class="sp-team-block">
+          <div id="sp-home-name" class="sp-team-name">Home</div>
+          <div id="sp-home-score" class="sp-score">0</div>
+        </div>
+      </div>
+
+      <div class="sp-situation">
+        <div>
+          <div class="sp-diamond">
+            <div id="sp-base-2" class="sp-base sp-2b"></div>
+            <div id="sp-base-3" class="sp-base sp-3b"></div>
+            <div id="sp-base-1" class="sp-base sp-1b"></div>
+            <div class="sp-hp"></div>
+          </div>
+        </div>
+        <div class="sp-bso">
+          <div class="sp-bso-item">
+            <div id="sp-balls" class="sp-bso-num">0</div>
+            <div class="sp-bso-key">B</div>
+          </div>
+          <div class="sp-bso-item">
+            <div id="sp-strikes" class="sp-bso-num">0</div>
+            <div class="sp-bso-key">S</div>
+          </div>
+          <div class="sp-bso-item">
+            <div id="sp-outs" class="sp-bso-num">0</div>
+            <div class="sp-bso-key">O</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sp-batter-card" class="sp-card sp-batter-card">
+      <div class="sp-batter-label">At Bat</div>
+      <div id="sp-batter-name" class="sp-batter-name">&mdash;</div>
+      <div id="sp-batter-stats" class="sp-batter-stats"></div>
+    </div>
+
+    <div class="sp-card">
+      <div class="sp-card-label">Scoreboard</div>
+      <div class="sp-sb-scroll">
+        <table class="sp-sb-table">
+          <thead id="sp-sb-head"><tr></tr></thead>
+          <tbody id="sp-sb-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sp-card">
+      <div class="sp-card-label">Recent Plays</div>
+      <div id="sp-plays"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const STORE_KEY = 'pines-wiffle-v1';
+  let state = null;
+  let umpBalls = 0;
+  let umpStrikes = 0;
+
+  // ── BroadcastChannel live sync ──────────────────────────────────────────────
+  try {
+    const ch = new BroadcastChannel('pines-wiffle-live');
+    ch.addEventListener('message', e => {
+      if (e.data.type === 'update') {
+        state     = e.data.state;
+        umpBalls   = e.data.umpBalls   || 0;
+        umpStrikes = e.data.umpStrikes || 0;
+        render();
+      }
+    });
+  } catch (_) {}
+
+  // ── localStorage poll (fallback / initial load) ──────────────────────────────
+  function readStorage() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch (_) { return null; }
+  }
+
+  setInterval(() => {
+    const fresh = readStorage();
+    if (!fresh) return;
+    if (!state || fresh.gameId !== state.gameId ||
+        (fresh.atBats || []).length !== (state.atBats || []).length ||
+        fresh.outs !== state.outs) {
+      state = fresh;
+      render();
+    }
+  }, 2500);
+
+  // ── Utils ────────────────────────────────────────────────────────────────────
+  function teamRuns(t) {
+    return (state.inningScores || []).reduce((s, i) => s + (i[t] || 0), 0);
+  }
+  function teamHits(t) {
+    return Object.values(state.players || {})
+      .filter(p => p.team === t)
+      .reduce((s, p) => s + pStats(p.id).H, 0);
+  }
+  function pStats(id) {
+    const abs = (state.atBats || []).filter(a => a.playerId === id);
+    let AB=0,H=0,s1=0,s2=0,s3=0,HR=0,RBI=0,BB=0,HBP=0,K=0,SF=0;
+    for (const a of abs) {
+      const r = a.result;
+      if (r!=='BB' && r!=='HBP') AB++;
+      if (r==='1B'){H++;s1++;} else if(r==='2B'){H++;s2++;} else if(r==='3B'){H++;s3++;}
+      else if(r==='HR'){H++;HR++;} else if(r==='BB')BB++; else if(r==='HBP')HBP++;
+      else if(r==='K')K++; else if(r==='SF')SF++;
+      RBI += (a.rbi||0);
+    }
+    const PA=AB+BB+HBP+SF, TB=s1+s2*2+s3*3+HR*4;
+    const f=(n,d)=>d===0?'.000':(n/d).toFixed(3).replace(/^0\./,'.');
+    return {AB,H,HR,RBI,BB,K,AVG:f(H,AB),OBP:f(H+BB+HBP,PA),SLG:f(TB,AB)};
+  }
+  function ordinal(n) {
+    const s=['th','st','nd','rd'],v=n%100;
+    return n+(s[(v-20)%10]||s[v]||s[0]);
+  }
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function el(id) { return document.getElementById(id); }
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+  function render() {
+    if (!state) {
+      el('sp-no-game').classList.remove('hidden');
+      el('sp-game').classList.add('hidden');
+      return;
+    }
+    el('sp-no-game').classList.add('hidden');
+    el('sp-game').classList.remove('hidden');
+
+    const { teams, currentInning, currentHalf, outs, inningScores,
+            totalInnings, atBats, players, status } = state;
+    const bases = state.bases || [false, false, false];
+
+    // Final pill
+    if (status === 'final') {
+      el('sp-live-pill').classList.add('hidden');
+      el('sp-final-pill').classList.remove('hidden');
+    } else {
+      el('sp-live-pill').classList.remove('hidden');
+      el('sp-final-pill').classList.add('hidden');
+    }
+
+    // Scores
+    el('sp-away-name').textContent  = teams.away.name;
+    el('sp-home-name').textContent  = teams.home.name;
+    el('sp-away-score').textContent = teamRuns('away');
+    el('sp-home-score').textContent = teamRuns('home');
+
+    // Inning + outs
+    el('sp-inning').innerHTML = ordinal(currentInning) + ' ' + (currentHalf==='top'?'&#9650;':'&#9660;');
+    for (let i=1; i<=3; i++) el('sp-od-'+i).classList.toggle('on', i<=outs);
+
+    // BSO
+    el('sp-balls').textContent   = umpBalls;
+    el('sp-strikes').textContent = umpStrikes;
+    el('sp-outs').textContent    = outs;
+
+    // Bases
+    el('sp-base-1').classList.toggle('on', bases[0]);
+    el('sp-base-2').classList.toggle('on', bases[1]);
+    el('sp-base-3').classList.toggle('on', bases[2]);
+
+    // Batter
+    const batter = state.currentBatterId ? players[state.currentBatterId] : null;
+    if (batter) {
+      const s = pStats(batter.id);
+      el('sp-batter-name').textContent = (batter.number?'#'+batter.number+' ':'')+batter.name;
+      el('sp-batter-stats').textContent = s.AVG+' AVG \u00b7 '+s.HR+' HR \u00b7 '+s.RBI+' RBI';
+      el('sp-batter-card').classList.remove('hidden');
+    } else {
+      el('sp-batter-card').classList.add('hidden');
+    }
+
+    // Scoreboard
+    const n = totalInnings || 5;
+    const headRow = el('sp-sb-head').querySelector('tr');
+    headRow.innerHTML = '<th class="sp-sb-team"></th>';
+    for (let i=1; i<=n; i++) {
+      const th = document.createElement('th');
+      th.textContent = i;
+      headRow.appendChild(th);
+    }
+    ['R','H'].forEach(t => {
+      const th = document.createElement('th');
+      th.className = 'sp-sb-totals-label';
+      th.textContent = t;
+      headRow.appendChild(th);
+    });
+
+    const tbody = el('sp-sb-body');
+    tbody.innerHTML = '';
+    ['away','home'].forEach(side => {
+      const tr = document.createElement('tr');
+      let html = `<td class="sp-sb-team">${esc(teams[side].name)}</td>`;
+      for (let i=0; i<n; i++) {
+        const active = (i+1===currentInning) && ((side==='away'&&currentHalf==='top')||(side==='home'&&currentHalf==='bottom'));
+        html += `<td class="sp-sb-cell${active?' active':''}">${(inningScores[i]||{})[side]??0}</td>`;
+      }
+      html += `<td class="sp-sb-runs sp-sb-totals-label">${teamRuns(side)}</td>`;
+      html += `<td class="sp-sb-hits sp-sb-totals-label">${teamHits(side)}</td>`;
+      tr.innerHTML = html;
+      tbody.appendChild(tr);
+    });
+
+    // Plays
+    const playsEl = el('sp-plays');
+    const abs = [...(atBats||[])].reverse().slice(0,12);
+    if (abs.length===0) {
+      playsEl.innerHTML = '<p style="color:var(--text-3);font-size:13px;padding:4px 0">No plays yet</p>';
+      return;
+    }
+    playsEl.innerHTML = '';
+    abs.forEach(ab => {
+      const p = players[ab.playerId];
+      const name = p ? p.name : 'Unknown';
+      const r = ab.result;
+      let cls = 'badge-hit';
+      if (r==='HR') cls='badge-hr';
+      else if (['K','Out','SF','E'].includes(r)) cls='badge-out';
+      else if (['BB','HBP'].includes(r)) cls='badge-walk';
+      const div = document.createElement('div');
+      div.className = 'sp-play-item';
+      div.innerHTML =
+        `<span class="sp-badge ${cls}">${r}</span>`+
+        `<div class="sp-play-info">`+
+          `<div class="sp-play-player">${esc(name)}</div>`+
+          `<div class="sp-play-meta">Inn ${ab.inning}${ab.half==='top'?'▲':'▼'}`+
+          (ab.rbi?` \u00b7 ${ab.rbi} RBI`:'')+`</div>`+
+        `</div>`;
+      playsEl.appendChild(div);
+    });
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+  state = readStorage();
+  render();
+})();
+</script>
+</body>
+</html>
