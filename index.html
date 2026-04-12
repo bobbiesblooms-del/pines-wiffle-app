@@ -97,55 +97,60 @@
         </div>
       </div>
 
-      <!-- ── GC SITUATION: Diamond + BSO + Pitch Buttons ── -->
+      <!-- ── GC SITUATION ── -->
       <div class="gc-situation">
 
-        <!-- Top row: diamond + BSO -->
-        <div class="gc-situation-top">
-          <div class="gc-diamond-panel">
+        <!-- BSO count row -->
+        <div class="gc-bso-row">
+          <div class="gc-bso-chip gc-b-chip">
+            <span id="gc-balls" class="gc-chip-num">0</span>
+            <span class="gc-chip-lbl">B</span>
+          </div>
+          <div class="gc-bso-sep"></div>
+          <div class="gc-bso-chip gc-s-chip">
+            <span id="gc-strikes" class="gc-chip-num">0</span>
+            <span class="gc-chip-lbl">S</span>
+          </div>
+          <div class="gc-bso-sep"></div>
+          <div class="gc-bso-chip gc-o-chip">
+            <span id="gc-outs-count" class="gc-chip-num">0</span>
+            <span class="gc-chip-lbl">O</span>
+          </div>
+        </div>
+
+        <!-- 3×3 grid: STRIKE above diamond, BALL left, OUT right, FOUL below -->
+        <div class="gc-diamond-grid">
+          <!-- row 1 -->
+          <div></div>
+          <button id="ump-strike" class="gc-pitch-btn gc-strike-btn">STRIKE</button>
+          <div></div>
+          <!-- row 2 -->
+          <button id="ump-ball" class="gc-pitch-btn gc-ball-btn">BALL</button>
+          <div class="gc-diamond-center">
             <div class="gc-diamond-field">
               <div id="gc-base-2" class="gc-base gc-2b"></div>
               <div id="gc-base-3" class="gc-base gc-3b"></div>
               <div id="gc-base-1" class="gc-base gc-1b"></div>
               <div class="gc-hp"></div>
             </div>
-            <div class="gc-base-btns">
-              <button class="base-toggle-btn" data-base="2">3B</button>
-              <button class="base-toggle-btn" data-base="1">2B</button>
-              <button class="base-toggle-btn" data-base="0">1B</button>
-              <button id="bases-clear" class="btn btn-xs btn-ghost">Clr</button>
-            </div>
           </div>
-
-          <div class="gc-bso-panel">
-            <div class="gc-bso-item">
-              <div id="gc-balls" class="gc-bso-num gc-b-num">0</div>
-              <div class="gc-bso-key">B</div>
-            </div>
-            <div class="gc-bso-item">
-              <div id="gc-strikes" class="gc-bso-num gc-s-num">0</div>
-              <div class="gc-bso-key">S</div>
-            </div>
-            <div class="gc-bso-item">
-              <div id="gc-outs-count" class="gc-bso-num gc-o-num">0</div>
-              <div class="gc-bso-key">O</div>
-            </div>
-          </div>
+          <button id="ump-out" class="gc-pitch-btn gc-out-btn">OUT</button>
+          <!-- row 3 -->
+          <div></div>
+          <button id="ump-foul" class="gc-pitch-btn gc-foul-btn">FOUL</button>
+          <div></div>
         </div>
 
-        <!-- Pitch buttons row -->
-        <div class="gc-pitch-btns">
-          <button id="ump-ball"   class="ump-btn ump-ball-btn">BALL</button>
-          <button id="ump-strike" class="ump-btn ump-strike-btn">STRIKE</button>
-          <button id="ump-foul"   class="ump-btn ump-foul-btn">FOUL</button>
-          <button id="ump-out"    class="ump-btn ump-out-btn">OUT</button>
+        <!-- Base toggles + reset -->
+        <div class="gc-base-row">
+          <button class="base-toggle-btn" data-base="2">3B</button>
+          <button class="base-toggle-btn" data-base="1">2B</button>
+          <button class="base-toggle-btn" data-base="0">1B</button>
+          <button id="bases-clear" class="btn btn-xs btn-ghost">Clr</button>
+          <button id="ump-reset" class="btn btn-xs btn-ghost">&#8635; Reset</button>
         </div>
 
-        <!-- Last call + reset -->
         <div id="ump-last-call" class="ump-last-call hidden"></div>
-        <div class="gc-pitch-footer">
-          <button id="ump-reset" class="btn btn-ghost btn-sm">&#8635; Reset Count</button>
-        </div>
 
       </div>
 
