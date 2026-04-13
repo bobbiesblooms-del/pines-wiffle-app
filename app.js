@@ -716,7 +716,8 @@
       return;
     }
     list.innerHTML = '';
-    [...state.gameHistory].reverse().forEach(g => {
+    [...state.gameHistory].reverse().forEach((g, ri) => {
+      const realIdx = state.gameHistory.length - 1 - ri;
       const awayR = g.inningScores.reduce((s, i) => s + (i.away || 0), 0);
       const homeR = g.inningScores.reduce((s, i) => s + (i.home || 0), 0);
       const date  = new Date(g.date).toLocaleDateString();
@@ -724,7 +725,8 @@
       div.className = 'history-item';
       div.innerHTML =
         `<div class="history-score">${esc(g.teams.away.name)} ${awayR} – ${homeR} ${esc(g.teams.home.name)}</div>` +
-        `<div class="history-meta">${date} &middot; ${g.status === 'final' ? 'Final' : 'In Progress'}</div>`;
+        `<div class="history-meta">${date} &middot; ${g.status === 'final' ? 'Final' : 'In Progress'}</div>` +
+        `<button class="btn btn-xs btn-ghost" data-action="recap" data-idx="${realIdx}">&#128202; Recap</button>`;
       list.appendChild(div);
     });
   }
@@ -1606,6 +1608,273 @@
       console.warn('Bad share data');
     }
   }
+
+  // ─── RECAP CARD ──────────────────────────────────────────────────────────────
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function drawRecapCard(canvas, g) {
+    // g = game snapshot (defaults to current state)
+    const gs = g || state;
+    const W = 600, H = 430;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const awayR = gs.inningScores.reduce((s, i) => s + (i.away || 0), 0);
+    const homeR = gs.inningScores.reduce((s, i) => s + (i.home || 0), 0);
+    const awayH = Object.values(gs.players || {}).filter(p => p.team === 'away')
+      .reduce((s, p) => s + computeStatsFromAbs(gs.atBats.filter(a => a.playerId === p.id)).H, 0);
+    const homeH = Object.values(gs.players || {}).filter(p => p.team === 'home')
+      .reduce((s, p) => s + computeStatsFromAbs(gs.atBats.filter(a => a.playerId === p.id)).H, 0);
+
+    const sf = (size, weight) => (weight || 'normal') + ' ' + size + 'px system-ui,-apple-system,sans-serif';
+    const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+    // ── Background ──────────────────────────────
+    const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+    bgGrad.addColorStop(0, '#060d1c');
+    bgGrad.addColorStop(1, '#090f20');
+    ctx.fillStyle = bgGrad;
+    roundRect(ctx, 0, 0, W, H, 16);
+    ctx.fill();
+
+    // subtle grid lines
+    ctx.strokeStyle = 'rgba(96,165,250,0.04)';
+    ctx.lineWidth = 1;
+    for (let y = 0; y < H; y += 24) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // outer border
+    ctx.strokeStyle = 'rgba(96,165,250,0.18)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, 1, 1, W - 2, H - 2, 15);
+    ctx.stroke();
+
+    // ── Header band ─────────────────────────────
+    const hBg = ctx.createLinearGradient(0, 0, W, 0);
+    hBg.addColorStop(0, 'rgba(37,99,235,0.25)');
+    hBg.addColorStop(1, 'rgba(37,99,235,0.05)');
+    ctx.fillStyle = hBg;
+    roundRect(ctx, 0, 0, W, 46, 16);  // only top rounded
+    ctx.fill();
+
+    ctx.font = sf(14, 'bold');
+    ctx.fillStyle = '#93c5fd';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚾  PINES WIFFLE', 20, 30);
+
+    const dateStr = new Date(gs.date).toLocaleDateString(undefined,
+      { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    ctx.font = sf(11);
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'right';
+    ctx.fillText(dateStr, W - 20, 30);
+
+    // ── Status pill ─────────────────────────────
+    const finalText = gs.status === 'final' ? 'FINAL' : 'IN PROGRESS';
+    const pillColor = gs.status === 'final' ? '#22c55e' : '#f59e0b';
+    ctx.font = sf(10, 'bold');
+    const pillW = ctx.measureText(finalText).width + 16;
+    ctx.fillStyle = gs.status === 'final' ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.12)';
+    ctx.textAlign = 'center';
+    roundRect(ctx, W/2 - pillW/2, 58, pillW, 18, 9);
+    ctx.fill();
+    ctx.fillStyle = pillColor;
+    ctx.fillText(finalText, W/2, 71);
+
+    // ── Big scores ──────────────────────────────
+    const scoreY = 94;
+    ctx.font = sf(11, 'bold');
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'left';
+    ctx.fillText(trunc(gs.teams.away.name, 14).toUpperCase(), 30, scoreY);
+    ctx.textAlign = 'right';
+    ctx.fillText(trunc(gs.teams.home.name, 14).toUpperCase(), W - 30, scoreY);
+
+    ctx.font = sf(88, 'bold');
+    ctx.textAlign = 'left';
+    ctx.fillStyle = awayR >= homeR ? '#f1f5f9' : '#334155';
+    ctx.fillText(String(awayR), 30, scoreY + 88);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = homeR >= awayR ? '#f1f5f9' : '#334155';
+    ctx.fillText(String(homeR), W - 30, scoreY + 88);
+
+    ctx.font = sf(20, 'bold');
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#334155';
+    ctx.fillText('—', W/2, scoreY + 56);
+
+    // ── Divider ─────────────────────────────────
+    const divY = scoreY + 104;
+    ctx.strokeStyle = 'rgba(96,165,250,0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(20, divY); ctx.lineTo(W - 20, divY); ctx.stroke();
+
+    // ── Scoreboard ──────────────────────────────
+    const innings = gs.totalInnings;
+    const sbX     = 64;
+    const avail   = W - sbX - 60;
+    const cellW   = Math.min(38, Math.floor(avail / innings));
+    const rColX   = sbX + innings * cellW + 8;
+    const sbRow1  = divY + 18;
+    const sbRow2  = sbRow1 + 19;
+    const sbRow3  = sbRow2 + 19;
+
+    // inning headers
+    ctx.font = sf(9, 'bold');
+    ctx.fillStyle = '#475569';
+    ctx.textAlign = 'center';
+    for (let i = 0; i < innings; i++) {
+      ctx.fillText(String(i + 1), sbX + i * cellW + cellW / 2, sbRow1);
+    }
+    ctx.fillText('R', rColX + 12, sbRow1);
+    ctx.fillText('H', rColX + 30, sbRow1);
+
+    // team rows
+    [[gs.teams.away.name, 'away', awayR, awayH, sbRow2],
+     [gs.teams.home.name, 'home', homeR, homeH, sbRow3]].forEach(([name, side, runs, hits, rowY]) => {
+      ctx.font = sf(9, 'bold');
+      ctx.fillStyle = '#64748b';
+      ctx.textAlign = 'left';
+      ctx.fillText(trunc(name, 7).toUpperCase(), 10, rowY);
+      for (let i = 0; i < innings; i++) {
+        const sc = gs.inningScores[i]?.[side] ?? 0;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = sc > 0 ? '#94a3b8' : '#334155';
+        ctx.fillText(String(sc), sbX + i * cellW + cellW / 2, rowY);
+      }
+      ctx.font = sf(9, 'bold');
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillText(String(runs), rColX + 12, rowY);
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(String(hits), rColX + 30, rowY);
+    });
+
+    // ── Top performers ───────────────────────────
+    const perfY = sbRow3 + 24;
+    ctx.strokeStyle = 'rgba(96,165,250,0.12)';
+    ctx.beginPath(); ctx.moveTo(20, perfY); ctx.lineTo(W - 20, perfY); ctx.stroke();
+
+    ctx.font = sf(9, 'bold');
+    ctx.fillStyle = '#475569';
+    ctx.textAlign = 'left';
+    ctx.fillText('TOP PERFORMERS', 20, perfY + 15);
+
+    const allP = Object.values(gs.players || {});
+    const cats = [
+      { icon: '🏆', lbl: 'AVG', key: 'AVG', cmp: v => parseFloat(v), minAB: 1,
+        fmt: (p, s) => (p.number ? '#' + p.number + ' ' : '') + p.name + '   ' + s.AVG + ' AVG' },
+      { icon: '💥', lbl: 'HR',  key: 'HR',  cmp: v => v, minAB: 0,
+        fmt: (p, s) => (p.number ? '#' + p.number + ' ' : '') + p.name + '   ' + s.HR + ' HR' },
+      { icon: '🎯', lbl: 'RBI', key: 'RBI', cmp: v => v, minAB: 0,
+        fmt: (p, s) => (p.number ? '#' + p.number + ' ' : '') + p.name + '   ' + s.RBI + ' RBI' },
+    ];
+
+    const colW = Math.floor((W - 40) / cats.length);
+    cats.forEach(({ icon, lbl, key, cmp, minAB, fmt }, ci) => {
+      const leaders = allP
+        .map(p => ({ p, s: computeStatsFromAbs((gs.atBats || []).filter(a => a.playerId === p.id)) }))
+        .filter(({ s }) => s.AB >= minAB && cmp(s[key]) > 0)
+        .sort((a, b) => cmp(b.s[key]) - cmp(a.s[key]));
+      if (!leaders.length) return;
+      const { p, s } = leaders[0];
+      const cx = 20 + ci * colW;
+      ctx.font = sf(11);
+      ctx.fillStyle = '#334155';
+      ctx.textAlign = 'left';
+      ctx.fillText(icon + ' ' + lbl, cx, perfY + 34);
+      ctx.font = sf(11, 'bold');
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(trunc(p.name, 12), cx, perfY + 50);
+      ctx.font = sf(14, 'bold');
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillText(String(s[key]), cx, perfY + 68);
+    });
+
+    // ── Footer ──────────────────────────────────
+    ctx.font = sf(10);
+    ctx.fillStyle = '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.fillText('Scored with Pines Wiffle Tracker', W / 2, H - 12);
+  }
+
+  function openRecap(gameSnapshot) {
+    const modal = document.getElementById('recap-modal');
+    modal.classList.remove('hidden');
+    const canvas = document.getElementById('recap-canvas');
+    drawRecapCard(canvas, gameSnapshot || null);
+  }
+
+  document.getElementById('recap-btn').addEventListener('click', () => openRecap());
+  document.getElementById('recap-close').addEventListener('click', () => {
+    document.getElementById('recap-modal').classList.add('hidden');
+  });
+  document.getElementById('recap-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('recap-modal') ||
+        e.target.classList.contains('modal-backdrop')) {
+      document.getElementById('recap-modal').classList.add('hidden');
+    }
+  });
+
+  document.getElementById('recap-download').addEventListener('click', () => {
+    const canvas = document.getElementById('recap-canvas');
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'pines-wiffle-recap.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }, 'image/png');
+  });
+
+  document.getElementById('recap-share').addEventListener('click', async () => {
+    const canvas = document.getElementById('recap-canvas');
+    canvas.toBlob(async blob => {
+      const file = new File([blob], 'pines-wiffle-recap.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'Game Recap — Pines Wiffle',
+            files: [file],
+          });
+        } catch (e) { /* user cancelled */ }
+      } else {
+        // Fallback: download
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pines-wiffle-recap.png';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      }
+    }, 'image/png');
+  });
+
+  // Recap button in history list
+  document.getElementById('history-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="recap"]');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.idx);
+    openRecap(state.gameHistory[idx]);
+  });
 
   // ─── INIT ────────────────────────────────────────────────────────────────────
 

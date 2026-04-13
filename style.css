@@ -2281,6 +2281,32 @@ body.viewer-mode .bases-bar { display: none !important; }
 }
 .field-hint a { color: var(--blue-lt); }
 
+/* Recap modal */
+.recap-sheet {
+  max-width: 640px;
+  width: 100%;
+  padding: 20px 16px 16px;
+}
+.recap-canvas-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  background: #060d1c;
+}
+.recap-canvas-wrap canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+.recap-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
 /* Share toast */
 .share-toast {
   position: fixed;

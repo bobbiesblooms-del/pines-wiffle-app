@@ -24,6 +24,7 @@
     </div>
     <div class="header-right">
       <span id="live-indicator" class="live-indicator hidden">&#9679; LIVE</span>
+      <button id="recap-btn" class="btn btn-ghost btn-sm">&#128202; Recap</button>
       <button id="golive-btn" class="btn btn-golive btn-sm">&#128249; Watch</button>
       <button id="settings-btn" class="btn btn-ghost btn-sm">&#9881;</button>
     </div>
@@ -541,6 +542,22 @@
     <div class="modal-actions">
       <button id="set-cancel" class="btn btn-ghost">Cancel</button>
       <button id="set-save" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECAP MODAL -->
+<div id="recap-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-sheet recap-sheet">
+    <h2>&#128202; Game Recap</h2>
+    <div class="recap-canvas-wrap">
+      <canvas id="recap-canvas"></canvas>
+    </div>
+    <div class="recap-actions">
+      <button id="recap-download" class="btn btn-primary">&#8681; Save Image</button>
+      <button id="recap-share" class="btn btn-primary">&#8679; Share</button>
+      <button id="recap-close" class="btn btn-ghost">Close</button>
     </div>
   </div>
 </div>
