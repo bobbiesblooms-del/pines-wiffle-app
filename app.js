@@ -686,11 +686,41 @@
   }
 
   let statsTeam = 'away';
+  let statsGameIdx = -1; // -1 = current game, 0+ = history index
+
+  function getStatsGame() {
+    if (statsGameIdx >= 0 && state.gameHistory && state.gameHistory[statsGameIdx]) {
+      return state.gameHistory[statsGameIdx];
+    }
+    return state;
+  }
+
+  function renderGameSelector() {
+    const sel = document.getElementById('stats-game-select');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="-1">Current Game</option>';
+    if (state.gameHistory && state.gameHistory.length > 0) {
+      [...state.gameHistory].reverse().forEach((g, ri) => {
+        const realIdx = state.gameHistory.length - 1 - ri;
+        const awayR = g.inningScores.reduce((s, i) => s + (i.away || 0), 0);
+        const homeR = g.inningScores.reduce((s, i) => s + (i.home || 0), 0);
+        const date  = new Date(g.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        const opt = document.createElement('option');
+        opt.value = realIdx;
+        opt.textContent = date + ' — ' + g.teams.away.name + ' ' + awayR + '–' + homeR + ' ' + g.teams.home.name;
+        sel.appendChild(opt);
+      });
+    }
+    // Restore selection if still valid
+    if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+  }
 
   function renderStats() {
-    const tbody = document.getElementById('batting-body');
-    let players = Object.values(state.players);
+    const game   = getStatsGame();
+    const tbody  = document.getElementById('batting-body');
+    let players  = Object.values(game.players || {});
     if (statsTeam !== 'all') players = players.filter(p => p.team === statsTeam);
+    players.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
 
     if (players.length === 0) {
       tbody.innerHTML = '<tr><td colspan="10" class="empty">No players</td></tr>';
@@ -698,8 +728,9 @@
     }
     tbody.innerHTML = '';
     players.forEach(p => {
-      const s = playerStats(p.id);
-      const tr = document.createElement('tr');
+      const abs = (game.atBats || []).filter(a => a.playerId === p.id);
+      const s   = computeStatsFromAbs(abs);
+      const tr  = document.createElement('tr');
       tr.innerHTML =
         `<td class="name-col">${esc(p.name)}</td>` +
         `<td>${s.AB}</td><td>${s.H}</td><td>${s.AVG}</td>` +
@@ -1060,7 +1091,7 @@
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-      if (btn.dataset.tab === 'stats')       { statsTeam === 'career' ? renderCareerStats() : renderStats(); }
+      if (btn.dataset.tab === 'stats')       { renderGameSelector(); statsTeam === 'career' ? renderCareerStats() : renderStats(); }
       if (btn.dataset.tab === 'lineup')      renderLineup();
       if (btn.dataset.tab === 'history')     renderHistory();
       if (btn.dataset.tab === 'leaderboard') renderLeaderboard();
@@ -1400,6 +1431,19 @@
   document.getElementById('tm-cancel').addEventListener('click', () => closeModal('team-modal'));
 
   // ─── STATS EVENTS ────────────────────────────────────────────────────────────
+
+  document.getElementById('stats-game-select').addEventListener('change', function () {
+    statsGameIdx = parseInt(this.value);
+    // Reset to Away when switching games (Career doesn't depend on game)
+    if (statsTeam !== 'career') {
+      document.querySelectorAll('#tab-stats .team-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('#tab-stats .team-btn[data-team="away"]').classList.add('active');
+      statsTeam = 'away';
+      document.getElementById('batting-card').classList.remove('hidden');
+      document.getElementById('career-card').classList.add('hidden');
+      renderStats();
+    }
+  });
 
   document.querySelectorAll('#tab-stats .team-btn').forEach(btn => {
     btn.addEventListener('click', () => {

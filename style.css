@@ -1306,6 +1306,15 @@ button { font-family: inherit; cursor: pointer; }
 .gc-b-name { color: var(--text); }
 .gc-b-empty { color: var(--text-3); font-size: 14px; font-style: italic; }
 
+/* Stats game selector */
+.stats-game-row {
+  margin-bottom: 8px;
+}
+.stats-game-row .select {
+  width: 100%;
+  font-size: 13px;
+}
+
 /* Manual override row */
 .gc-override-row {
   padding: 6px 12px;
